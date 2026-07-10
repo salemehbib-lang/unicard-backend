@@ -4,7 +4,7 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 
-from .views import InscriptionView
+from .views import InscriptionView, ProfilUtilisateurView
 
 
 urlpatterns = [
@@ -22,5 +22,10 @@ urlpatterns = [
         "auth/token/refresh/",
         TokenRefreshView.as_view(),
         name="token_refresh",
+    ),
+    path(
+        "auth/profil/",
+        ProfilUtilisateurView.as_view(),
+        name="profil_utilisateur",
     ),
 ]

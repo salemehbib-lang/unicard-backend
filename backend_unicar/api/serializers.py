@@ -68,3 +68,25 @@ class InscriptionSerializer(serializers.ModelSerializer):
         utilisateur.save()
 
         return utilisateur
+    
+class ProfilUtilisateurSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Utilisateur
+        fields = [
+            "id",
+            "username",
+            "first_name",
+            "last_name",
+            "email",
+            "telephone",
+            "role",
+            "est_bloque",
+            "date_joined",
+        ]
+        read_only_fields = [
+            "id",
+            "username",
+            "role",
+            "est_bloque",
+            "date_joined",
+        ]
