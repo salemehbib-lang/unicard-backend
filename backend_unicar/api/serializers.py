@@ -1,6 +1,7 @@
 from django.contrib.auth.password_validation import validate_password
 from django.utils import timezone
 from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from .models import (
     Utilisateur,
@@ -27,6 +28,102 @@ class InscriptionSerializer(serializers.ModelSerializer):
         required=True,
         style={"input_type": "password"},
     )
+
+    class Meta:
+        model = Utilisateur
+        fields = [
+            "id",
+            "username",
+            "first_name",
+            "last_name",
+            "email",
+            "telephone",
+            "role",
+            "password",
+            "password_confirmation",
+        ]
+
+        read_only_fields = [
+            "id",
+        ]
+
+    def validate_role(self, value):
+        roles_autorises = [
+            Utilisateur.Role.PASSAGER,
+            Utilisateur.Role.CONDUCTEUR,
+        ]
+
+        if value not in roles_autorises:
+            raise serializers.ValidationError(
+                "Le rôle doit être passager ou conducteur."
+            )
+
+        return value
+
+    def validate(self, attrs):
+        password = attrs.get("password")
+        confirmation = attrs.get(
+            "password_confirmation"
+        )
+
+        if password != confirmation:
+            raise serializers.ValidationError(
+                {
+                    "password_confirmation": (
+                        "Les mots de passe ne correspondent pas."
+                    )
+                }
+            )
+
+        return attrs
+
+    def create(self, validated_data):
+        validated_data.pop(
+            "password_confirmation"
+        )
+
+        password = validated_data.pop(
+            "password"
+        )
+
+        utilisateur = Utilisateur(
+            **validated_data
+        )
+
+        utilisateur.set_password(password)
+        utilisateur.save()
+
+        return utilisateur
+    
+# PROFIL UTILISATEUR
+
+class ProfilUtilisateurSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Utilisateur
+        fields = [
+            "id",
+            "username",
+            "first_name",
+            "last_name",
+            "email",
+            "telephone",
+            "role",
+            "est_bloque",
+            "date_joined",
+        ]
+
+        read_only_fields = [
+            "id",
+            "username",
+            "role",
+            "est_bloque",
+            "date_joined",
+        ]
+
+
+
+    
 # CHANGEMENT DE MOT DE PASSE
 
 class ChangerMotDePasseSerializer(serializers.Serializer):
@@ -59,6 +156,7 @@ class ChangerMotDePasseSerializer(serializers.Serializer):
     def validate(self, attrs):
         nouveau = attrs["nouveau_mot_de_passe"]
         confirmation = attrs["confirmation_mot_de_passe"]
+        ancien = attrs["ancien_mot_de_passe"]
 
         if nouveau != confirmation:
             raise serializers.ValidationError(
@@ -69,8 +167,6 @@ class ChangerMotDePasseSerializer(serializers.Serializer):
                     )
                 }
             )
-
-        ancien = attrs["ancien_mot_de_passe"]
 
         if ancien == nouveau:
             raise serializers.ValidationError(
@@ -118,12 +214,11 @@ class ChangerMotDePasseSerializer(serializers.Serializer):
     def validate(self, attrs):
         if attrs["password"] != attrs["password_confirmation"]:
             raise serializers.ValidationError(
-                {
-                    "password_confirmation": (
-                        "Les deux mots de passe ne correspondent pas."
-                    )
-                }
-            )
+            {
+                "password_confirmation":
+                    "Les mots de passe ne correspondent pas."
+            }
+        )
 
         return attrs
 
@@ -136,33 +231,6 @@ class ChangerMotDePasseSerializer(serializers.Serializer):
         utilisateur.save()
 
         return utilisateur
-
-
-# PROFIL UTILISATEUR
-
-class ProfilUtilisateurSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Utilisateur
-        fields = [
-            "id",
-            "username",
-            "first_name",
-            "last_name",
-            "email",
-            "telephone",
-            "role",
-            "est_bloque",
-            "date_joined",
-        ]
-
-        read_only_fields = [
-            "id",
-            "username",
-            "role",
-            "est_bloque",
-            "date_joined",
-        ]
 
 
 
@@ -612,3 +680,19 @@ class AdminUtilisateurSerializer(serializers.ModelSerializer):
             "last_login",
         ]
 
+class ConnexionTokenSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        donnees = super().validate(attrs)
+
+        utilisateur = self.user
+
+        donnees["utilisateur"] = {
+            "id": utilisateur.id,
+            "username": utilisateur.username,
+            "email": utilisateur.email,
+            "telephone": utilisateur.telephone,
+            "role": utilisateur.role,
+            "est_bloque": utilisateur.est_bloque,
+        }
+
+        return donnees

@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.db import transaction
 from django.db.models import Sum
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 from .models import (
     Utilisateur,
@@ -18,6 +19,7 @@ from .models import (
 from .permissions import( EstConducteur, EstAdministrateur,)
 
 from .serializers import (
+    ConnexionTokenSerializer,
     InscriptionSerializer,
     ProfilUtilisateurSerializer,
     VehiculeSerializer,
@@ -27,11 +29,14 @@ from .serializers import (
     NotificationSerializer,
     AdminUtilisateurSerializer,
     ChangerMotDePasseSerializer,
+    
 )
 
 
 
 # AUTHENTIFICATION ET PROFIL
+class ConnexionView(TokenObtainPairView):
+    serializer_class = ConnexionTokenSerializer
 
 class InscriptionView(generics.CreateAPIView):
     queryset = Utilisateur.objects.all()
