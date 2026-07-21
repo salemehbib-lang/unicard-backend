@@ -9,6 +9,7 @@ class Trajet {
   final String prixParPlace;
   final String description;
   final String statut;
+  final String etat;
 
   const Trajet({
     required this.id,
@@ -21,15 +22,19 @@ class Trajet {
     required this.prixParPlace,
     required this.description,
     required this.statut,
+    required this.etat,
   });
 
   factory Trajet.fromJson(
     Map<String, dynamic> json,
   ) {
     return Trajet(
-      id: _convertirEntier(json['id']),
-      conducteur:
-          _convertirConducteur(json['conducteur']),
+      id: _convertirEntier(
+        json['id'],
+      ),
+      conducteur: _convertirConducteur(
+        json['conducteur'],
+      ),
       lieuDepart:
           json['lieu_depart']?.toString() ?? '',
       lieuArrivee:
@@ -48,6 +53,9 @@ class Trajet {
           json['description']?.toString() ?? '',
       statut:
           json['statut']?.toString() ?? '',
+      etat:
+          json['etat']?.toString() ??
+          'en_attente_depart',
     );
   }
 
@@ -64,6 +72,7 @@ class Trajet {
       'prix_par_place': prixParPlace,
       'description': description,
       'statut': statut,
+      'etat': etat,
     };
   }
 
@@ -78,6 +87,7 @@ class Trajet {
     String? prixParPlace,
     String? description,
     String? statut,
+    String? etat,
   }) {
     return Trajet(
       id: id ?? this.id,
@@ -98,16 +108,25 @@ class Trajet {
           prixParPlace ?? this.prixParPlace,
       description:
           description ?? this.description,
-      statut: statut ?? this.statut,
+      statut:
+          statut ?? this.statut,
+      etat:
+          etat ?? this.etat,
     );
   }
 
   bool get estDisponible {
+    final statutNormalise =
+        statut.toLowerCase();
+
     return nombrePlacesDisponibles > 0 &&
-        statut.toLowerCase() != 'annule' &&
-        statut.toLowerCase() != 'annulee' &&
-        statut.toLowerCase() != 'annulé' &&
-        statut.toLowerCase() != 'annulée';
+        statutNormalise != 'annule' &&
+        statutNormalise != 'annulee' &&
+        statutNormalise != 'annulé' &&
+        statutNormalise != 'annulée' &&
+        statutNormalise != 'complet' &&
+        statutNormalise != 'termine' &&
+        statutNormalise != 'terminé';
   }
 
   String get trajetFormate {
@@ -129,6 +148,47 @@ class Trajet {
     }
 
     return '$dateDepart à $heureDepart';
+  }
+
+  String get etatLisible {
+    switch (etat) {
+      case 'en_attente_depart':
+        return 'En attente du départ';
+
+      case 'chauffeur_en_route':
+        return 'Chauffeur en route';
+
+      case 'chauffeur_arrive':
+        return 'Chauffeur arrivé';
+
+      case 'en_cours':
+        return 'Trajet en cours';
+
+      case 'termine':
+        return 'Trajet terminé';
+
+      default:
+        return etat;
+    }
+  }
+
+  String get statutLisible {
+    switch (statut) {
+      case 'publie':
+        return 'Publié';
+
+      case 'complet':
+        return 'Complet';
+
+      case 'annule':
+        return 'Annulé';
+
+      case 'termine':
+        return 'Terminé';
+
+      default:
+        return statut;
+    }
   }
 
   static int _convertirEntier(
@@ -171,10 +231,14 @@ class Trajet {
       if (valeur['first_name'] != null ||
           valeur['last_name'] != null) {
         final prenom =
-            valeur['first_name']?.toString() ?? '';
+            valeur['first_name']
+                    ?.toString() ??
+                '';
 
         final nom =
-            valeur['last_name']?.toString() ?? '';
+            valeur['last_name']
+                    ?.toString() ??
+                '';
 
         return '$prenom $nom'.trim();
       }
@@ -198,7 +262,8 @@ class Trajet {
         'heure: $heureDepart, '
         'places: $nombrePlacesDisponibles, '
         'prix: $prixParPlace, '
-        'statut: $statut'
+        'statut: $statut, '
+        'etat: $etat'
         ')';
   }
 }

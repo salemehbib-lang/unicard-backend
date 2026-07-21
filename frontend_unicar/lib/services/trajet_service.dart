@@ -1,7 +1,5 @@
 import 'dart:convert';
-
 import 'package:http/http.dart' as http;
-
 import '../config/api_config.dart';
 import '../models/trajet.dart';
 import '../utils/token_storage.dart';
@@ -182,39 +180,71 @@ class TrajetService {
   }
 
   try {
+    final uri = Uri.parse(
+      ApiConfig.mesTrajets,
+    );
+
+  
+
     final response = await http
         .get(
-          Uri.parse(ApiConfig.mesTrajets),
+          uri,
           headers: _construireEntetes(
             token: token,
           ),
         )
         .timeout(_delaiMaximum);
 
-    final donnees =
-        _decoderReponse(response.body);
 
-    if (response.statusCode == 200) {
-      return _convertirListeTrajets(
-        donnees,
+    if (response.statusCode != 200) {
+      dynamic donnees;
+
+      try {
+        donnees = _decoderReponse(
+          response.body,
+        );
+      } catch (_) {
+        donnees = null;
+      }
+
+      throw Exception(
+        _extraireMessageErreur(
+          donnees,
+          codeStatut: response.statusCode,
+          messageParDefaut:
+              'Impossible de récupérer vos trajets.',
+        ),
       );
     }
 
-    throw Exception(
-      _extraireMessageErreur(
-        donnees,
-        codeStatut: response.statusCode,
-        messageParDefaut:
-            'Impossible de récupérer vos trajets.',
-      ),
+    if (response.body.trim().isEmpty) {
+      return [];
+    }
+
+    dynamic donnees;
+
+    try {
+      donnees = jsonDecode(
+        response.body,
+      );
+    } catch (_) {
+      throw FormatException(
+        'Le serveur a retourné une réponse non JSON. '
+        'Code : ${response.statusCode}. '
+        'Réponse : ${response.body}',
+      );
+    }
+
+    return _convertirListeTrajets(
+      donnees,
     );
   } on http.ClientException {
     throw Exception(
       'Impossible de contacter le serveur Django.',
     );
-  } on FormatException {
+  } on FormatException catch (erreur) {
     throw Exception(
-      'La réponse du serveur est invalide.',
+      erreur.message,
     );
   } catch (erreur) {
     throw Exception(
@@ -226,7 +256,6 @@ class TrajetService {
     );
   }
 }
-
   Future<Map<String, dynamic>> modifierTrajet({
     required int trajetId,
     int? vehiculeId,
@@ -613,21 +642,39 @@ class TrajetService {
         donnees['results'] is List) {
       listeBrute =
           donnees['results'] as List<dynamic>;
+    } else if (donnees is Map &&
+        donnees['trajets'] is List) {
+      listeBrute =
+          donnees['trajets'] as List<dynamic>;
     } else {
-      return [];
+      throw const FormatException(
+        'La liste des trajets est absente de la réponse.',
+      );
     }
 
     final trajets = <Trajet>[];
 
-    for (final element in listeBrute) {
-      if (element is Map) {
-        final trajetJson =
-            Map<String, dynamic>.from(
-          element,
+    for (var index = 0;
+        index < listeBrute.length;
+        index++) {
+      final element = listeBrute[index];
+
+      if (element is! Map) {
+        throw FormatException(
+          'Le trajet numéro ${index + 1} possède un format invalide.',
         );
+      }
+
+      try {
+        final trajetJson =
+            Map<String, dynamic>.from(element);
 
         trajets.add(
           Trajet.fromJson(trajetJson),
+        );
+      } catch (erreur) {
+        throw FormatException(
+          'Impossible de lire le trajet numéro ${index + 1} : $erreur',
         );
       }
     }

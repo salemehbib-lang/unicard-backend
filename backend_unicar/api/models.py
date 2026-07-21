@@ -281,17 +281,25 @@ class Notification(models.Model):
             "chauffeur_en_route",
             "Chauffeur en route",
         )
+
         CHAUFFEUR_ARRIVE = (
             "chauffeur_arrive",
             "Chauffeur arrivé",
         )
+
         TRAJET_COMMENCE = (
             "trajet_commence",
             "Trajet commencé",
         )
+
         TRAJET_TERMINE = (
             "trajet_termine",
             "Trajet terminé",
+        )
+
+        TRAJET_ANNULE = (
+            "trajet_annule",
+            "Trajet annulé",
         )
 
     utilisateur = models.ForeignKey(
@@ -314,7 +322,7 @@ class Notification(models.Model):
     )
 
     titre = models.CharField(
-        max_length=150,
+        max_length=255,
     )
 
     message = models.TextField()
@@ -334,10 +342,6 @@ class Notification(models.Model):
 
     def __str__(self):
         return (
-            f"{self.utilisateur.username} - "
-            f"{self.titre}"
+            f"{self.titre} - "
+            f"{self.utilisateur.username}"
         )
-    TRAJET_ANNULE = (
-    "trajet_annule",
-    "Trajet annulé",
-    )

@@ -13,7 +13,6 @@ from .views import (
     TrajetListCreateView,
     TrajetDetailView,
     ChangerEtatTrajetAPIView,
-
     ListeCreationReservationView,
     DetailReservationView,
     AccepterReservationView,
@@ -30,6 +29,8 @@ from .views import (
     TableauBordConducteurView,
     TableauBordPassagerView,
     ChangerMotDePasseView,
+    MesTrajetsView,
+    
 
 )
 
@@ -90,6 +91,11 @@ urlpatterns = [
         TrajetListCreateView.as_view(),
         name="trajets",
     ),
+    path(
+        "mes-trajets/",
+        MesTrajetsView.as_view(),
+        name="mes_trajets",
+    ),
 
     path(
         "trajets/<int:pk>/",
@@ -107,6 +113,7 @@ urlpatterns = [
     AnnulerTrajetView.as_view(),
     name="annuler_trajet",
     ),
+    
 
     
     # Réservations

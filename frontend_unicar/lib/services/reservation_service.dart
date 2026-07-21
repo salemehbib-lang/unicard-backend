@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 
 import 'package:http/http.dart' as http;
 
@@ -65,63 +66,111 @@ class ReservationService {
     }
   }
 
-  Future<List<Reservation>> recupererReservations() async {
-    final token = await TokenStorage.recupererAccessToken();
+Future<List<Reservation>> recupererReservations() async {
+  final token =
+      await TokenStorage.recupererAccessToken();
 
-    if (token == null || token.isEmpty) {
-      throw Exception(
-        'Votre session a expiré. Veuillez vous reconnecter.',
-      );
+  if (token == null || token.trim().isEmpty) {
+    throw Exception(
+      'Votre session a expiré. Veuillez vous reconnecter.',
+    );
+  }
+
+  final uri = Uri.parse(
+    ApiConfig.reservations,
+  );
+
+  try {
+    final response = await http.get(
+      uri,
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ${token.trim()}',
+      },
+    );
+
+    debugPrint(
+  'URL RESERVATIONS : $uri',
+);
+
+  debugPrint(
+  'CODE RESERVATIONS : ${response.statusCode}',
+);
+  debugPrint(
+  'REPONSE RESERVATIONS : ${response.body}',
+);
+    dynamic donnees;
+
+    if (response.body.trim().isNotEmpty) {
+      try {
+        donnees = jsonDecode(
+          response.body,
+        );
+      } catch (_) {
+        throw Exception(
+          'Le serveur a retourné une réponse invalide.',
+        );
+      }
     }
 
-    try {
-      final response = await http.get(
-        Uri.parse(ApiConfig.reservations),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
+    if (response.statusCode == 200) {
+      List<dynamic> listeBrute;
 
-      if (response.statusCode == 200) {
-        final donnees = jsonDecode(response.body);
-
-        if (donnees is List) {
-          return donnees
-              .map(
-                (element) => Reservation.fromJson(
-                  element as Map<String, dynamic>,
-                ),
-              )
-              .toList();
-        }
-
-        if (donnees is Map<String, dynamic> &&
-            donnees['results'] is List) {
-          final resultats = donnees['results'] as List;
-
-          return resultats
-              .map(
-                (element) => Reservation.fromJson(
-                  element as Map<String, dynamic>,
-                ),
-              )
-              .toList();
-        }
-
+      if (donnees is List) {
+        listeBrute = donnees;
+      } else if (donnees is Map &&
+          donnees['results'] is List) {
+        listeBrute =
+            donnees['results'] as List<dynamic>;
+      } else if (donnees is Map &&
+          donnees['reservations'] is List) {
+        listeBrute =
+            donnees['reservations']
+                as List<dynamic>;
+      } else {
         return [];
       }
 
-      throw Exception(
-        'Impossible de récupérer les réservations. '
-        'Code : ${response.statusCode}',
-      );
-    } catch (erreur) {
-      throw Exception(
-        erreur.toString().replaceFirst('Exception: ', ''),
-      );
+      return listeBrute.map((element) {
+        return Reservation.fromJson(
+          Map<String, dynamic>.from(
+            element as Map,
+          ),
+        );
+      }).toList();
     }
+
+    if (response.statusCode == 401) {
+      String message =
+          'Votre session a expiré. Veuillez vous reconnecter.';
+
+      if (donnees is Map &&
+          donnees['detail'] != null) {
+        message =
+            donnees['detail'].toString();
+      }
+
+      throw Exception(message);
+    }
+
+    throw Exception(
+      _extraireMessageErreur(
+        donnees,
+        response.statusCode,
+      ),
+    );
+  } catch (erreur) {
+    throw Exception(
+      erreur
+          .toString()
+          .replaceFirst(
+            'Exception: ',
+            '',
+          ),
+    );
   }
+}
   Future<Map<String, dynamic>> annulerReservation({
   required int reservationId,
 }) async {

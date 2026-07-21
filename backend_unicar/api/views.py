@@ -4,9 +4,9 @@ from rest_framework import generics, permissions, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.db import transaction
 from django.db.models import Sum
 from rest_framework_simplejwt.views import TokenObtainPairView
+
 
 from .models import (
     Utilisateur,
@@ -249,10 +249,13 @@ class ChangerEtatTrajetAPIView(APIView):
         EstConducteur,
     ]
 
+    @transaction.atomic
     def patch(self, request, trajet_id):
         try:
-            trajet = Trajet.objects.get(
-                pk=trajet_id
+            trajet = (
+                Trajet.objects
+                .select_for_update()
+                .get(pk=trajet_id)
             )
         except Trajet.DoesNotExist:
             return Response(
@@ -289,10 +292,7 @@ class ChangerEtatTrajetAPIView(APIView):
             data=request.data,
             partial=True,
         )
-
-        serializer.is_valid(
-            raise_exception=True
-        )
+        serializer.is_valid(raise_exception=True)
 
         ancien_etat = trajet.etat
         trajet = serializer.save()
@@ -306,34 +306,30 @@ class ChangerEtatTrajetAPIView(APIView):
                 ]
             )
 
-        notifications_data = {
+        notifications_par_etat = {
             Trajet.Etat.CHAUFFEUR_EN_ROUTE: {
                 "type": Notification.Type.CHAUFFEUR_EN_ROUTE,
                 "titre": "Chauffeur en route",
                 "message": (
-                    "Votre chauffeur est en route vers "
-                    "le point de rendez-vous."
+                    "Votre chauffeur est en route "
+                    "vers le point de rendez-vous."
                 ),
             },
-
             Trajet.Etat.CHAUFFEUR_ARRIVE: {
                 "type": Notification.Type.CHAUFFEUR_ARRIVE,
                 "titre": "Chauffeur arrivé",
                 "message": (
-                    "Votre chauffeur est arrivé au "
-                    "point de rendez-vous."
+                    "Votre chauffeur est arrivé "
+                    "au point de rendez-vous."
                 ),
             },
-
             Trajet.Etat.EN_COURS: {
                 "type": Notification.Type.TRAJET_COMMENCE,
                 "titre": "Trajet commencé",
                 "message": (
-                    "Votre trajet a commencé. "
-                    "Bon voyage."
+                    "Votre trajet a commencé. Bon voyage."
                 ),
             },
-
             Trajet.Etat.TERMINE: {
                 "type": Notification.Type.TRAJET_TERMINE,
                 "titre": "Trajet terminé",
@@ -344,19 +340,18 @@ class ChangerEtatTrajetAPIView(APIView):
             },
         }
 
-        notification_data = notifications_data.get(
+        notification_data = notifications_par_etat.get(
             trajet.etat
         )
-
         nombre_notifications = 0
 
-        if notification_data:
+        if notification_data is not None:
             reservations_acceptees = (
-                trajet.reservations.filter(
+                trajet.reservations
+                .filter(
                     statut=Reservation.Statut.ACCEPTEE
-                ).select_related(
-                    "passager"
                 )
+                .select_related("passager")
             )
 
             notifications_a_creer = [
@@ -370,13 +365,13 @@ class ChangerEtatTrajetAPIView(APIView):
                 for reservation in reservations_acceptees
             ]
 
-            Notification.objects.bulk_create(
-                notifications_a_creer
-            )
-
-            nombre_notifications = len(
-                notifications_a_creer
-            )
+            if notifications_a_creer:
+                Notification.objects.bulk_create(
+                    notifications_a_creer
+                )
+                nombre_notifications = len(
+                    notifications_a_creer
+                )
 
         return Response(
             {
@@ -400,6 +395,16 @@ class ChangerEtatTrajetAPIView(APIView):
             status=status.HTTP_200_OK,
         )
 
+
+class MesTrajetsView(generics.ListAPIView):
+    serializer_class = TrajetSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Trajet.objects.filter(
+            conducteur=self.request.user
+        ).order_by("-date_depart", "-heure_depart")
+
 # ANNULATION D'UN TRAJET
 
 class AnnulerTrajetView(APIView):
@@ -416,6 +421,7 @@ class AnnulerTrajetView(APIView):
                 .select_for_update()
                 .get(pk=trajet_id)
             )
+
         except Trajet.DoesNotExist:
             return Response(
                 {
@@ -438,7 +444,9 @@ class AnnulerTrajetView(APIView):
         if trajet.statut == Trajet.Statut.ANNULE:
             return Response(
                 {
-                    "detail": "Ce trajet est déjà annulé."
+                    "detail": (
+                        "Ce trajet est déjà annulé."
+                    )
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
@@ -447,7 +455,8 @@ class AnnulerTrajetView(APIView):
             return Response(
                 {
                     "detail": (
-                        "Un trajet terminé ne peut pas être annulé."
+                        "Un trajet terminé ne peut "
+                        "pas être annulé."
                     )
                 },
                 status=status.HTTP_400_BAD_REQUEST,
@@ -464,12 +473,8 @@ class AnnulerTrajetView(APIView):
             )
         )
 
-        passagers = [
-            reservation.passager
-            for reservation in reservations_concernees
-        ]
-
         trajet.statut = Trajet.Statut.ANNULE
+
         trajet.save(
             update_fields=[
                 "statut",
@@ -477,37 +482,46 @@ class AnnulerTrajetView(APIView):
             ]
         )
 
-        Reservation.objects.filter(
-            pk__in=[
-                reservation.pk
-                for reservation in reservations_concernees
-            ]
-        ).update(
-            statut=Reservation.Statut.ANNULEE
-        )
+        ids_reservations = [
+            reservation.pk
+            for reservation in reservations_concernees
+        ]
+
+        if ids_reservations:
+            Reservation.objects.filter(
+                pk__in=ids_reservations
+            ).update(
+                statut=Reservation.Statut.ANNULEE
+            )
 
         notifications = [
             Notification(
-                utilisateur=passager,
+                utilisateur=reservation.passager,
                 trajet=trajet,
                 type_notification=Notification.Type.TRAJET_ANNULE,
                 titre="Trajet annulé",
                 message=(
-                    f"Le trajet de {trajet.lieu_depart} "
-                    f"vers {trajet.lieu_arrivee} a été annulé."
+                    f"Le trajet de "
+                    f"{trajet.lieu_depart} "
+                    f"vers "
+                    f"{trajet.lieu_arrivee} "
+                    f"a été annulé par le conducteur."
                 ),
+                est_lue=False,
             )
-            for passager in passagers
+            for reservation in reservations_concernees
         ]
 
-        Notification.objects.bulk_create(
-            notifications
-        )
+        if notifications:
+            Notification.objects.bulk_create(
+                notifications
+            )
 
         return Response(
             {
                 "message": (
-                    "Le trajet a été annulé avec succès."
+                    "Le trajet a été annulé avec succès "
+                    "et les passagers ont été informés."
                 ),
                 "trajet_id": trajet.id,
                 "statut": trajet.statut,
@@ -520,7 +534,6 @@ class AnnulerTrajetView(APIView):
             },
             status=status.HTTP_200_OK,
         )
-    
 # RESERVATIONS
 
 class ListeCreationReservationView(
@@ -979,10 +992,7 @@ class ListeNotificationsView(
         )
 
 
-class MarquerNotificationLueView(
-    generics.UpdateAPIView
-):
-    serializer_class = NotificationSerializer
+class MarquerNotificationLueView(generics.UpdateAPIView):
     permission_classes = [
         permissions.IsAuthenticated,
     ]
@@ -995,6 +1005,22 @@ class MarquerNotificationLueView(
     def get_queryset(self):
         return Notification.objects.filter(
             utilisateur=self.request.user
+        )
+
+    def patch(self, request, *args, **kwargs):
+        notification = self.get_object()
+
+        notification.est_lue = True
+        notification.save(update_fields=["est_lue"])
+
+        return Response(
+            {
+                "succes": True,
+                "message": "Notification marquée comme lue.",
+                "id": notification.id,
+                "lue": notification.est_lue,
+            },
+            status=status.HTTP_200_OK,
         )
 
 # ADMINISTRATION DES UTILISATEURS
@@ -1058,6 +1084,7 @@ class BloquerUtilisateurAdminView(APIView):
             utilisateur = Utilisateur.objects.get(
                 pk=utilisateur_id
             )
+
         except Utilisateur.DoesNotExist:
             return Response(
                 {
@@ -1082,7 +1109,7 @@ class BloquerUtilisateurAdminView(APIView):
                 {
                     "detail": (
                         "Un superutilisateur ne peut pas "
-                        "être bloqué par cette API."
+                        "être bloqué."
                     )
                 },
                 status=status.HTTP_400_BAD_REQUEST,
@@ -1099,9 +1126,12 @@ class BloquerUtilisateurAdminView(APIView):
             )
 
         utilisateur.est_bloque = True
+        utilisateur.is_active = False
+
         utilisateur.save(
             update_fields=[
                 "est_bloque",
+                "is_active",
             ]
         )
 
@@ -1113,6 +1143,7 @@ class BloquerUtilisateurAdminView(APIView):
                 "utilisateur_id": utilisateur.id,
                 "username": utilisateur.username,
                 "est_bloque": utilisateur.est_bloque,
+                "is_active": utilisateur.is_active,
             },
             status=status.HTTP_200_OK,
         )
@@ -1129,6 +1160,7 @@ class DebloquerUtilisateurAdminView(APIView):
             utilisateur = Utilisateur.objects.get(
                 pk=utilisateur_id
             )
+
         except Utilisateur.DoesNotExist:
             return Response(
                 {
@@ -1148,9 +1180,12 @@ class DebloquerUtilisateurAdminView(APIView):
             )
 
         utilisateur.est_bloque = False
+        utilisateur.is_active = True
+
         utilisateur.save(
             update_fields=[
                 "est_bloque",
+                "is_active",
             ]
         )
 
@@ -1162,6 +1197,7 @@ class DebloquerUtilisateurAdminView(APIView):
                 "utilisateur_id": utilisateur.id,
                 "username": utilisateur.username,
                 "est_bloque": utilisateur.est_bloque,
+                "is_active": utilisateur.is_active,
             },
             status=status.HTTP_200_OK,
         )
@@ -1492,4 +1528,3 @@ class TableauBordPassagerView(APIView):
             },
             status=status.HTTP_200_OK,
         )
-

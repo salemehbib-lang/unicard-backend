@@ -30,6 +30,7 @@ class _AddTripScreenState extends State<AddTripScreen> {
     'Thiès',
     'Saint-Louis',
     'Nouakchott',
+    'Rosso',
   ];
 
   int? _vehiculeSelectionneId;
@@ -97,8 +98,7 @@ class _AddTripScreenState extends State<AddTripScreen> {
   Future<void> _selectionnerHeure() async {
     final heureChoisie = await showTimePicker(
       context: context,
-      initialTime:
-          _heureDepart ?? TimeOfDay.now(),
+      initialTime: _heureDepart ?? TimeOfDay.now(),
       helpText: 'Choisir l’heure de départ',
       cancelText: 'Annuler',
       confirmText: 'Valider',
@@ -114,11 +114,8 @@ class _AddTripScreenState extends State<AddTripScreen> {
   }
 
   String _formaterDate(DateTime date) {
-    final jour =
-        date.day.toString().padLeft(2, '0');
-
-    final mois =
-        date.month.toString().padLeft(2, '0');
+    final jour = date.day.toString().padLeft(2, '0');
+    final mois = date.month.toString().padLeft(2, '0');
 
     return '$jour/$mois/${date.year}';
   }
@@ -257,9 +254,8 @@ class _AddTripScreenState extends State<AddTripScreen> {
       ..showSnackBar(
         SnackBar(
           content: Text(message),
-          backgroundColor: estErreur
-              ? Colors.red
-              : Colors.green,
+          backgroundColor:
+              estErreur ? Colors.red : Colors.green,
         ),
       );
   }
@@ -289,8 +285,7 @@ class _AddTripScreenState extends State<AddTripScreen> {
             );
           }
 
-          if (vehicleProvider.messageErreur !=
-                  null &&
+          if (vehicleProvider.messageErreur != null &&
               vehicleProvider.vehicules.isEmpty) {
             return _construireErreurVehicules(
               vehicleProvider,
@@ -306,8 +301,7 @@ class _AddTripScreenState extends State<AddTripScreen> {
 
           return SafeArea(
             child: SingleChildScrollView(
-              padding:
-                  const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(20),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -320,8 +314,7 @@ class _AddTripScreenState extends State<AddTripScreen> {
                           .textTheme
                           .titleLarge
                           ?.copyWith(
-                        fontWeight:
-                            FontWeight.bold,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -335,11 +328,11 @@ class _AddTripScreenState extends State<AddTripScreen> {
                     _construireChoixVehicule(
                       vehiculesActifs,
                     ),
+
                     const SizedBox(height: 16),
 
-                    DropdownButtonFormField<
-                        String>(
-                      initialValue:  _villeDepart,
+                    DropdownButtonFormField<String>(
+                      initialValue: _villeDepart,
                       decoration:
                           const InputDecoration(
                         labelText:
@@ -350,23 +343,26 @@ class _AddTripScreenState extends State<AddTripScreen> {
                         border:
                             OutlineInputBorder(),
                       ),
-                      items: _villes
-                          .map(
-                            (ville) =>
-                                DropdownMenuItem(
-                              value: ville,
-                              child: Text(ville),
-                            ),
-                          )
-                          .toList(),
+                      items: _villes.map((ville) {
+                        return DropdownMenuItem<
+                            String>(
+                          value: ville,
+                          child: Text(ville),
+                        );
+                      }).toList(),
                       onChanged:
-                          trajetProvider
-                                  .operationEnCours
+                          trajetProvider.operationEnCours
                               ? null
                               : (valeur) {
                                   setState(() {
                                     _villeDepart =
                                         valeur;
+
+                                    if (_villeArrivee ==
+                                        valeur) {
+                                      _villeArrivee =
+                                          null;
+                                    }
                                   });
                                 },
                       validator: (valeur) {
@@ -378,33 +374,36 @@ class _AddTripScreenState extends State<AddTripScreen> {
                         return null;
                       },
                     ),
+
                     const SizedBox(height: 16),
 
-                    DropdownButtonFormField<
-                        String>(
-                      initialValue:  _villeArrivee,
+                    DropdownButtonFormField<String>(
+                      initialValue: _villeArrivee,
                       decoration:
                           const InputDecoration(
                         labelText:
                             'Ville d’arrivée',
                         prefixIcon: Icon(
-                          Icons.location_on_outlined,
+                          Icons
+                              .location_on_outlined,
                         ),
                         border:
                             OutlineInputBorder(),
                       ),
                       items: _villes
-                          .map(
+                          .where(
                             (ville) =>
-                                DropdownMenuItem(
-                              value: ville,
-                              child: Text(ville),
-                            ),
+                                ville != _villeDepart,
                           )
-                          .toList(),
+                          .map((ville) {
+                        return DropdownMenuItem<
+                            String>(
+                          value: ville,
+                          child: Text(ville),
+                        );
+                      }).toList(),
                       onChanged:
-                          trajetProvider
-                                  .operationEnCours
+                          trajetProvider.operationEnCours
                               ? null
                               : (valeur) {
                                   setState(() {
@@ -418,15 +417,21 @@ class _AddTripScreenState extends State<AddTripScreen> {
                           return 'Choisissez la ville d’arrivée.';
                         }
 
+                        if (valeur == _villeDepart) {
+                          return 'La ville d’arrivée doit être différente.';
+                        }
+
                         return null;
                       },
                     ),
+
                     const SizedBox(height: 16),
 
                     Row(
                       children: [
                         Expanded(
-                          child: _construireChampDate(),
+                          child:
+                              _construireChampDate(),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -435,6 +440,7 @@ class _AddTripScreenState extends State<AddTripScreen> {
                         ),
                       ],
                     ),
+
                     const SizedBox(height: 16),
 
                     TextFormField(
@@ -471,6 +477,7 @@ class _AddTripScreenState extends State<AddTripScreen> {
                         return null;
                       },
                     ),
+
                     const SizedBox(height: 16),
 
                     TextFormField(
@@ -510,6 +517,7 @@ class _AddTripScreenState extends State<AddTripScreen> {
                         return null;
                       },
                     ),
+
                     const SizedBox(height: 16),
 
                     TextFormField(
@@ -534,6 +542,7 @@ class _AddTripScreenState extends State<AddTripScreen> {
                             OutlineInputBorder(),
                       ),
                     ),
+
                     const SizedBox(height: 24),
 
                     SizedBox(
@@ -578,7 +587,7 @@ class _AddTripScreenState extends State<AddTripScreen> {
     List<Vehicle> vehicules,
   ) {
     return DropdownButtonFormField<int>(
-      initialValue:  _vehiculeSelectionneId,
+      initialValue: _vehiculeSelectionneId,
       decoration: const InputDecoration(
         labelText: 'Véhicule',
         prefixIcon: Icon(
@@ -613,8 +622,7 @@ class _AddTripScreenState extends State<AddTripScreen> {
   Widget _construireChampDate() {
     return InkWell(
       onTap: _selectionnerDate,
-      borderRadius:
-          BorderRadius.circular(4),
+      borderRadius: BorderRadius.circular(4),
       child: InputDecorator(
         decoration: const InputDecoration(
           labelText: 'Date',
@@ -635,8 +643,7 @@ class _AddTripScreenState extends State<AddTripScreen> {
   Widget _construireChampHeure() {
     return InkWell(
       onTap: _selectionnerHeure,
-      borderRadius:
-          BorderRadius.circular(4),
+      borderRadius: BorderRadius.circular(4),
       child: InputDecorator(
         decoration: const InputDecoration(
           labelText: 'Heure',
@@ -679,8 +686,12 @@ class _AddTripScreenState extends State<AddTripScreen> {
               onPressed: () {
                 provider.recupererVehicules();
               },
-              icon: const Icon(Icons.refresh),
-              label: const Text('Réessayer'),
+              icon: const Icon(
+                Icons.refresh,
+              ),
+              label: const Text(
+                'Réessayer',
+              ),
             ),
           ],
         ),
