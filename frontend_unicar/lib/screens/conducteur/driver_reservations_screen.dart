@@ -271,7 +271,8 @@ class _DriverReservationCardState
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(dialogContext).pop(false);
+                Navigator.of(dialogContext)
+                    .pop(false);
               },
               child: const Text(
                 'Annuler',
@@ -291,7 +292,8 @@ class _DriverReservationCardState
                     )
                   : null,
               onPressed: () {
-                Navigator.of(dialogContext).pop(true);
+                Navigator.of(dialogContext)
+                    .pop(true);
               },
               child: Text(
                 texteConfirmation,
@@ -476,28 +478,75 @@ class _DriverReservationCardState
               ],
             ),
             const SizedBox(height: 18),
+
             _InformationReservation(
               icone:
                   Icons.calendar_today_outlined,
               texte: reservation.dateDepart,
             ),
             const SizedBox(height: 10),
+
             _InformationReservation(
               icone: Icons.access_time_outlined,
               texte: reservation.heureDepart,
             ),
             const SizedBox(height: 10),
+
             _InformationReservation(
               icone: Icons.event_seat_outlined,
               texte:
                   '${reservation.nombrePlaces} place(s)',
             ),
-            const SizedBox(height: 16),
+
+            if (reservation
+                .informationsPassagerDisponibles) ...[
+              const SizedBox(height: 18),
+              const Divider(),
+              const SizedBox(height: 10),
+
+              Text(
+                'Informations du passager',
+                style: Theme.of(context)
+                    .textTheme
+                    .titleSmall
+                    ?.copyWith(
+                      fontWeight:
+                          FontWeight.bold,
+                    ),
+              ),
+              const SizedBox(height: 12),
+
+              _InformationReservation(
+                icone: Icons.person_outline,
+                texte:
+                    reservation.nomPassager!,
+              ),
+
+              if (reservation
+                          .telephonePassager !=
+                      null &&
+                  reservation
+                      .telephonePassager!
+                      .trim()
+                      .isNotEmpty) ...[
+                const SizedBox(height: 10),
+                _InformationReservation(
+                  icone: Icons.phone_outlined,
+                  texte: reservation
+                      .telephonePassager!,
+                ),
+              ],
+            ],
+
+            const SizedBox(height: 18),
+
             DriverStatusBadge(
               statut: reservation.statut,
             ),
+
             if (estEnAttente) ...[
               const SizedBox(height: 20),
+
               if (_traitement)
                 const Center(
                   child: Padding(
@@ -560,6 +609,8 @@ class _InformationReservation
   @override
   Widget build(BuildContext context) {
     return Row(
+      crossAxisAlignment:
+          CrossAxisAlignment.start,
       children: [
         Icon(
           icone,

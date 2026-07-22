@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../providers/reservation_provider.dart';
 import '../../models/reservation.dart';
+import '../../providers/reservation_provider.dart';
 
 class MyReservationsScreen extends StatefulWidget {
   const MyReservationsScreen({super.key});
@@ -14,34 +14,30 @@ class MyReservationsScreen extends StatefulWidget {
 
 class _MyReservationsScreenState
     extends State<MyReservationsScreen> {
-
   @override
   void initState() {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ReservationProvider>().chargerReservations();
+      context
+          .read<ReservationProvider>()
+          .chargerReservations();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-
     final provider =
         Provider.of<ReservationProvider>(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Mes réservations"),
+        title: const Text('Mes réservations'),
       ),
-
       body: RefreshIndicator(
-        onRefresh: () =>
-            provider.chargerReservations(),
-
+        onRefresh: provider.chargerReservations,
         child: Builder(
           builder: (context) {
-
             if (provider.chargement) {
               return const Center(
                 child: CircularProgressIndicator(),
@@ -49,28 +45,62 @@ class _MyReservationsScreenState
             }
 
             if (provider.messageErreur != null) {
-              return Center(
-                child: Text(provider.messageErreur!),
+              return ListView(
+                physics:
+                    const AlwaysScrollableScrollPhysics(),
+                children: [
+                  const SizedBox(height: 180),
+                  Center(
+                    child: Padding(
+                      padding:
+                          const EdgeInsets.symmetric(
+                        horizontal: 24,
+                      ),
+                      child: Text(
+                        provider.messageErreur!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               );
             }
 
             if (provider.reservations.isEmpty) {
-              return const Center(
-                child: Text(
-                  "Aucune réservation",
-                  style: TextStyle(fontSize: 18),
-                ),
+              return ListView(
+                physics:
+                    const AlwaysScrollableScrollPhysics(),
+                children: const [
+                  SizedBox(height: 180),
+                  Icon(
+                    Icons.event_busy_outlined,
+                    size: 65,
+                    color: Colors.grey,
+                  ),
+                  SizedBox(height: 16),
+                  Center(
+                    child: Text(
+                      'Aucune réservation',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
               );
             }
 
             return ListView.builder(
+              physics:
+                  const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(16),
-
               itemCount:
                   provider.reservations.length,
-
               itemBuilder: (context, index) {
-
                 final reservation =
                     provider.reservations[index];
 
@@ -85,6 +115,7 @@ class _MyReservationsScreenState
     );
   }
 }
+
 class _ReservationCard extends StatelessWidget {
   const _ReservationCard({
     required this.reservation,
@@ -99,7 +130,8 @@ class _ReservationCard extends StatelessWidget {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Annuler la réservation'),
+          title:
+              const Text('Annuler la réservation'),
           content: Text(
             'Voulez-vous vraiment annuler la réservation '
             '${reservation.lieuDepart} → '
@@ -108,22 +140,26 @@ class _ReservationCard extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(dialogContext).pop(false);
+                Navigator.of(dialogContext)
+                    .pop(false);
               },
               child: const Text('Non'),
             ),
             ElevatedButton(
               onPressed: () {
-                Navigator.of(dialogContext).pop(true);
+                Navigator.of(dialogContext)
+                    .pop(true);
               },
-              child: const Text('Oui, annuler'),
+              child:
+                  const Text('Oui, annuler'),
             ),
           ],
         );
       },
     );
 
-    if (confirmation != true || !context.mounted) {
+    if (confirmation != true ||
+        !context.mounted) {
       return;
     }
 
@@ -138,7 +174,8 @@ class _ReservationCard extends StatelessWidget {
     }
 
     if (succes) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
         const SnackBar(
           content: Text(
             'Réservation annulée avec succès.',
@@ -153,7 +190,8 @@ class _ReservationCard extends StatelessWidget {
             .messageErreur ??
         'Impossible d’annuler la réservation.';
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    ScaffoldMessenger.of(context)
+        .showSnackBar(
       SnackBar(
         content: Text(message),
         backgroundColor: Colors.red,
@@ -163,16 +201,15 @@ class _ReservationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final peutAnnuler =
-        reservation.statut == 'en_attente' ||
-        reservation.statut == 'acceptee';
-
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin:
+          const EdgeInsets.only(bottom: 14),
+      elevation: 2,
       child: Padding(
         padding: const EdgeInsets.all(18),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment:
+              CrossAxisAlignment.start,
           children: [
             Text(
               '${reservation.lieuDepart} → '
@@ -183,53 +220,79 @@ class _ReservationCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 14),
-            Row(
-              children: [
-                const Icon(
+            _InformationLine(
+              icon:
                   Icons.calendar_today_outlined,
-                  size: 18,
-                ),
-                const SizedBox(width: 8),
-                Text(reservation.dateDepart),
-                const SizedBox(width: 18),
-                const Icon(
-                  Icons.access_time,
-                  size: 18,
-                ),
-                const SizedBox(width: 8),
-                Text(reservation.heureDepart),
-              ],
+              texte: reservation.dateDepart,
             ),
             const SizedBox(height: 10),
-            Row(
-              children: [
-                const Icon(
-                  Icons.event_seat_outlined,
-                  size: 18,
-                ),
-                const SizedBox(width: 8),
-                Text(
+            _InformationLine(
+              icon: Icons.access_time,
+              texte: reservation.heureDepart,
+            ),
+            const SizedBox(height: 10),
+            _InformationLine(
+              icon: Icons.event_seat_outlined,
+              texte:
                   '${reservation.nombrePlaces} place(s)',
+            ),
+
+            if (reservation
+                .informationsConducteurDisponibles) ...[
+              const SizedBox(height: 16),
+              const Divider(),
+              const SizedBox(height: 10),
+              const Text(
+                'Informations du conducteur',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              _InformationLine(
+                icon: Icons.person_outline,
+                texte:
+                    reservation.nomConducteur!,
+              ),
+              if (reservation
+                          .telephoneConducteur !=
+                      null &&
+                  reservation
+                      .telephoneConducteur!
+                      .trim()
+                      .isNotEmpty) ...[
+                const SizedBox(height: 10),
+                _InformationLine(
+                  icon: Icons.phone_outlined,
+                  texte: reservation
+                      .telephoneConducteur!,
                 ),
               ],
-            ),
-            const SizedBox(height: 14),
+            ],
+
+            const SizedBox(height: 16),
             Row(
               mainAxisAlignment:
-                  MainAxisAlignment.spaceBetween,
+                  MainAxisAlignment
+                      .spaceBetween,
               children: [
                 _StatutBadge(
                   statut: reservation.statut,
                 ),
-                if (peutAnnuler)
+                if (reservation
+                    .peutEtreAnnulee)
                   TextButton.icon(
                     onPressed: () {
-                      _annulerReservation(context);
+                      _annulerReservation(
+                        context,
+                      );
                     },
                     icon: const Icon(
                       Icons.cancel_outlined,
                     ),
-                    label: const Text('Annuler'),
+                    label:
+                        const Text('Annuler'),
                   ),
               ],
             ),
@@ -239,6 +302,39 @@ class _ReservationCard extends StatelessWidget {
     );
   }
 }
+
+class _InformationLine extends StatelessWidget {
+  const _InformationLine({
+    required this.icon,
+    required this.texte,
+  });
+
+  final IconData icon;
+  final String texte;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment:
+          CrossAxisAlignment.start,
+      children: [
+        Icon(
+          icon,
+          size: 19,
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            texte,
+            style:
+                const TextStyle(fontSize: 15),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _StatutBadge extends StatelessWidget {
   const _StatutBadge({
     required this.statut,
@@ -279,8 +375,10 @@ class _StatutBadge extends StatelessWidget {
         vertical: 7,
       ),
       decoration: BoxDecoration(
-        color: couleur.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(20),
+        color:
+            couleur.withValues(alpha: 0.12),
+        borderRadius:
+            BorderRadius.circular(20),
         border: Border.all(
           color: couleur,
         ),

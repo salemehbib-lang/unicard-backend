@@ -471,6 +471,8 @@ class ChangerEtatTrajetSerializer(serializers.ModelSerializer):
 
 # RESERVATION
 
+# RESERVATION
+
 class ReservationSerializer(serializers.ModelSerializer):
     passager = serializers.ReadOnlyField(
         source="passager.username"
@@ -481,6 +483,9 @@ class ReservationSerializer(serializers.ModelSerializer):
         read_only=True,
     )
 
+    conducteur_details = serializers.SerializerMethodField()
+    passager_details = serializers.SerializerMethodField()
+
     class Meta:
         model = Reservation
         fields = [
@@ -488,6 +493,8 @@ class ReservationSerializer(serializers.ModelSerializer):
             "trajet",
             "trajet_details",
             "passager",
+            "passager_details",
+            "conducteur_details",
             "nombre_places",
             "statut",
             "date_reservation",
@@ -496,10 +503,60 @@ class ReservationSerializer(serializers.ModelSerializer):
         read_only_fields = [
             "id",
             "passager",
+            "passager_details",
+            "conducteur_details",
             "statut",
             "date_reservation",
             "trajet_details",
         ]
+
+    def get_conducteur_details(self, obj):
+        request = self.context.get("request")
+
+        # Le passager voit les coordonnées du conducteur
+        # seulement après l’acceptation de la réservation.
+        if (
+            request
+            and request.user == obj.passager
+            and obj.statut != Reservation.Statut.ACCEPTEE
+        ):
+            return None
+
+        conducteur = obj.trajet.conducteur
+        nom_complet = conducteur.get_full_name().strip()
+
+        return {
+            "id": conducteur.id,
+            "username": conducteur.username,
+            "first_name": conducteur.first_name,
+            "last_name": conducteur.last_name,
+            "nom_complet": nom_complet or conducteur.username,
+            "telephone": conducteur.telephone,
+        }
+
+    def get_passager_details(self, obj):
+        request = self.context.get("request")
+
+        # Les informations du passager sont destinées
+        # au conducteur propriétaire du trajet.
+        if (
+            request
+            and request.user != obj.trajet.conducteur
+            and request.user != obj.passager
+        ):
+            return None
+
+        passager = obj.passager
+        nom_complet = passager.get_full_name().strip()
+
+        return {
+            "id": passager.id,
+            "username": passager.username,
+            "first_name": passager.first_name,
+            "last_name": passager.last_name,
+            "nom_complet": nom_complet or passager.username,
+            "telephone": passager.telephone,
+        }
 
     def validate(self, attrs):
         request = self.context.get("request")
