@@ -15,6 +15,7 @@ from .views import (
     ChangerEtatTrajetAPIView,
     ListeCreationReservationView,
     DetailReservationView,
+    PointRendezVousReservationView,
     AccepterReservationView,
     RefuserReservationView,
     ListeNotificationsView,
@@ -113,38 +114,49 @@ urlpatterns = [
     AnnulerTrajetView.as_view(),
     name="annuler_trajet",
     ),
-    
-
+    path(
+    "reservations/<int:reservation_id>/point-rendez-vous/",
+    PointRendezVousReservationView.as_view(),
+    name="reservation-point-rendez-vous",
+    ),
     
     # Réservations
     
     path(
-        "reservations/",
-        ListeCreationReservationView.as_view(),
-        name="liste_creation_reservations",
-    ),
+    "reservations/",
+    ListeCreationReservationView.as_view(),
+    name="liste-creation-reservations",
+),
 
-    path(
-        "reservations/<int:pk>/",
-        DetailReservationView.as_view(),
-        name="detail_reservation",
-    ),
-    path(
+path(
+    "reservations/<int:pk>/",
+    DetailReservationView.as_view(),
+    name="detail-reservation",
+),
+
+path(
     "reservations/<int:reservation_id>/accepter/",
     AccepterReservationView.as_view(),
-    name="accepter_reservation",
-    ),
+    name="accepter-reservation",
+),
 
-    path(
+path(
     "reservations/<int:reservation_id>/refuser/",
     RefuserReservationView.as_view(),
-    name="refuser_reservation",
-    ),
-    path(
+    name="refuser-reservation",
+),
+
+path(
     "reservations/<int:reservation_id>/annuler/",
     AnnulerReservationView.as_view(),
-    name="annuler_reservation",
-    ),
+    name="annuler-reservation",
+),
+
+path(
+    "reservations/<int:reservation_id>/point-rendez-vous/",
+    PointRendezVousReservationView.as_view(),
+    name="reservation-point-rendez-vous",
+),
 
 
 # Notifications

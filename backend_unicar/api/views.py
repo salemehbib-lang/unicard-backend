@@ -25,6 +25,7 @@ from .serializers import (
     VehiculeSerializer,
     TrajetSerializer,
     ReservationSerializer,
+    PointRendezVousSerializer,
     ChangerEtatTrajetSerializer,
     NotificationSerializer,
     AdminUtilisateurSerializer,
@@ -638,6 +639,70 @@ class DetailReservationView(
             )
 
         return Reservation.objects.all()
+# GESTION DU POINT DE RENDEZ-VOUS
+
+class PointRendezVousReservationView(APIView):
+    permission_classes = [
+        permissions.IsAuthenticated,
+    ]
+
+    def patch(self, request, reservation_id):
+        try:
+            reservation = (
+                Reservation.objects
+                .select_related(
+                    "passager",
+                    "trajet",
+                    "trajet__conducteur",
+                )
+                .get(pk=reservation_id)
+            )
+
+        except Reservation.DoesNotExist:
+            return Response(
+                {
+                    "detail": "Réservation introuvable."
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        serializer = PointRendezVousSerializer(
+            reservation,
+            data=request.data,
+            partial=True,
+            context={
+                "request": request,
+            },
+        )
+
+        serializer.is_valid(
+            raise_exception=True
+        )
+
+        serializer.save()
+
+        return Response(
+            {
+                "message": (
+                    "Le point de rendez-vous a été "
+                    "enregistré avec succès."
+                ),
+                "reservation_id": reservation.id,
+                "adresse_rendez_vous": (
+                    reservation.adresse_rendez_vous
+                ),
+                "latitude_rendez_vous": (
+                    reservation.latitude_rendez_vous
+                ),
+                "longitude_rendez_vous": (
+                    reservation.longitude_rendez_vous
+                ),
+                "point_rendez_vous_confirme": (
+                    reservation.point_rendez_vous_confirme
+                ),
+            },
+            status=status.HTTP_200_OK,
+        )
 
 # ACCEPTATION ET REFUS DES RESERVATIONS
 
@@ -883,6 +948,7 @@ class AnnulerReservationView(APIView):
                 )
                 .get(pk=reservation_id)
             )
+
         except Reservation.DoesNotExist:
             return Response(
                 {
@@ -948,9 +1014,19 @@ class AnnulerReservationView(APIView):
             )
 
         reservation.statut = Reservation.Statut.ANNULEE
+
+        reservation.adresse_rendez_vous = None
+        reservation.latitude_rendez_vous = None
+        reservation.longitude_rendez_vous = None
+        reservation.point_rendez_vous_confirme = False
+
         reservation.save(
             update_fields=[
                 "statut",
+                "adresse_rendez_vous",
+                "latitude_rendez_vous",
+                "longitude_rendez_vous",
+                "point_rendez_vous_confirme",
             ]
         )
 
@@ -966,6 +1042,9 @@ class AnnulerReservationView(APIView):
                     trajet.nombre_places_disponibles
                 ),
                 "statut_trajet": trajet.statut,
+                "point_rendez_vous_confirme": (
+                    reservation.point_rendez_vous_confirme
+                ),
             },
             status=status.HTTP_200_OK,
         )

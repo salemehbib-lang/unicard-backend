@@ -3,9 +3,12 @@ import 'package:provider/provider.dart';
 
 import '../../models/reservation.dart';
 import '../../providers/reservation_provider.dart';
+import 'point_rendez_vous_screen.dart';
 
 class MyReservationsScreen extends StatefulWidget {
-  const MyReservationsScreen({super.key});
+  const MyReservationsScreen({
+    super.key,
+  });
 
   @override
   State<MyReservationsScreen> createState() =>
@@ -32,7 +35,9 @@ class _MyReservationsScreenState
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mes réservations'),
+        title: const Text(
+          'Mes réservations',
+        ),
       ),
       body: RefreshIndicator(
         onRefresh: provider.chargerReservations,
@@ -123,15 +128,40 @@ class _ReservationCard extends StatelessWidget {
 
   final Reservation reservation;
 
+  Future<void> _ouvrirPointRendezVous(
+    BuildContext context,
+  ) async {
+    final resultat =
+        await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) {
+          return PointRendezVousScreen(
+  reservation: reservation,
+);
+        },
+      ),
+    );
+
+    if (
+        resultat == true &&
+        context.mounted) {
+      await context
+          .read<ReservationProvider>()
+          .chargerReservations();
+    }
+  }
+
   Future<void> _annulerReservation(
     BuildContext context,
   ) async {
-    final confirmation = await showDialog<bool>(
+    final confirmation =
+        await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title:
-              const Text('Annuler la réservation'),
+          title: const Text(
+            'Annuler la réservation',
+          ),
           content: Text(
             'Voulez-vous vraiment annuler la réservation '
             '${reservation.lieuDepart} → '
@@ -143,22 +173,26 @@ class _ReservationCard extends StatelessWidget {
                 Navigator.of(dialogContext)
                     .pop(false);
               },
-              child: const Text('Non'),
+              child: const Text(
+                'Non',
+              ),
             ),
             ElevatedButton(
               onPressed: () {
                 Navigator.of(dialogContext)
                     .pop(true);
               },
-              child:
-                  const Text('Oui, annuler'),
+              child: const Text(
+                'Oui, annuler',
+              ),
             ),
           ],
         );
       },
     );
 
-    if (confirmation != true ||
+    if (
+        confirmation != true ||
         !context.mounted) {
       return;
     }
@@ -182,6 +216,7 @@ class _ReservationCard extends StatelessWidget {
           ),
         ),
       );
+
       return;
     }
 
@@ -193,7 +228,9 @@ class _ReservationCard extends StatelessWidget {
     ScaffoldMessenger.of(context)
         .showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: Text(
+          message,
+        ),
         backgroundColor: Colors.red,
       ),
     );
@@ -202,8 +239,9 @@ class _ReservationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin:
-          const EdgeInsets.only(bottom: 14),
+      margin: const EdgeInsets.only(
+        bottom: 14,
+      ),
       elevation: 2,
       child: Padding(
         padding: const EdgeInsets.all(18),
@@ -255,7 +293,8 @@ class _ReservationCard extends StatelessWidget {
                 texte:
                     reservation.nomConducteur!,
               ),
-              if (reservation
+              if (
+                  reservation
                           .telephoneConducteur !=
                       null &&
                   reservation
@@ -272,30 +311,52 @@ class _ReservationCard extends StatelessWidget {
             ],
 
             const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment:
-                  MainAxisAlignment
-                      .spaceBetween,
-              children: [
-                _StatutBadge(
-                  statut: reservation.statut,
-                ),
-                if (reservation
-                    .peutEtreAnnulee)
-                  TextButton.icon(
-                    onPressed: () {
-                      _annulerReservation(
-                        context,
-                      );
-                    },
-                    icon: const Icon(
-                      Icons.cancel_outlined,
-                    ),
-                    label:
-                        const Text('Annuler'),
-                  ),
-              ],
+
+            _StatutBadge(
+              statut: reservation.statut,
             ),
+
+            if (reservation.statut ==
+                'acceptee') ...[
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    _ouvrirPointRendezVous(
+                      context,
+                    );
+                  },
+                  icon: const Icon(
+                    Icons.location_on_outlined,
+                  ),
+                  label: const Text(
+                    'Définir ou modifier le point de rendez-vous',
+                  ),
+                ),
+              ),
+            ],
+
+            if (reservation.peutEtreAnnulee) ...[
+              const SizedBox(height: 8),
+              Align(
+                alignment:
+                    Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed: () {
+                    _annulerReservation(
+                      context,
+                    );
+                  },
+                  icon: const Icon(
+                    Icons.cancel_outlined,
+                  ),
+                  label: const Text(
+                    'Annuler',
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -303,7 +364,8 @@ class _ReservationCard extends StatelessWidget {
   }
 }
 
-class _InformationLine extends StatelessWidget {
+class _InformationLine
+    extends StatelessWidget {
   const _InformationLine({
     required this.icon,
     required this.texte,
@@ -326,8 +388,9 @@ class _InformationLine extends StatelessWidget {
         Expanded(
           child: Text(
             texte,
-            style:
-                const TextStyle(fontSize: 15),
+            style: const TextStyle(
+              fontSize: 15,
+            ),
           ),
         ),
       ],
@@ -375,8 +438,9 @@ class _StatutBadge extends StatelessWidget {
         vertical: 7,
       ),
       decoration: BoxDecoration(
-        color:
-            couleur.withValues(alpha: 0.12),
+        color: couleur.withValues(
+          alpha: 0.12,
+        ),
         borderRadius:
             BorderRadius.circular(20),
         border: Border.all(

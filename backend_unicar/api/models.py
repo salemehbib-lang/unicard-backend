@@ -236,7 +236,7 @@ class Reservation(models.Model):
     )
 
     nombre_places = models.PositiveSmallIntegerField(
-        default=1
+        default=1,
     )
 
     statut = models.CharField(
@@ -245,8 +245,33 @@ class Reservation(models.Model):
         default=Statut.EN_ATTENTE,
     )
 
+    # Informations du point de rendez-vous du passager
+    adresse_rendez_vous = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+    )
+
+    latitude_rendez_vous = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        null=True,
+        blank=True,
+    )
+
+    longitude_rendez_vous = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        null=True,
+        blank=True,
+    )
+
+    point_rendez_vous_confirme = models.BooleanField(
+        default=False,
+    )
+
     date_reservation = models.DateTimeField(
-        auto_now_add=True
+        auto_now_add=True,
     )
 
     class Meta:

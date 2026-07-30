@@ -3,9 +3,12 @@ import 'package:provider/provider.dart';
 
 import '../../models/reservation.dart';
 import '../../providers/reservation_provider.dart';
+import 'driver_point_rendez_vous_screen.dart';
 
 class DriverReservationsScreen extends StatefulWidget {
-  const DriverReservationsScreen({super.key});
+  const DriverReservationsScreen({
+    super.key,
+  });
 
   @override
   State<DriverReservationsScreen> createState() =>
@@ -99,7 +102,9 @@ class _DriverReservationsScreenState
       ),
       itemCount: provider.reservations.length,
       separatorBuilder: (_, _) {
-        return const SizedBox(height: 12);
+        return const SizedBox(
+          height: 12,
+        );
       },
       itemBuilder: (context, index) {
         final reservation =
@@ -138,9 +143,13 @@ class _EtatErreur extends StatelessWidget {
     return ListView(
       physics:
           const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(
+        24,
+      ),
       children: [
-        const SizedBox(height: 90),
+        const SizedBox(
+          height: 90,
+        ),
         Icon(
           Icons.error_outline,
           size: 72,
@@ -148,7 +157,9 @@ class _EtatErreur extends StatelessWidget {
               .colorScheme
               .error,
         ),
-        const SizedBox(height: 18),
+        const SizedBox(
+          height: 18,
+        ),
         Text(
           'Impossible de charger les réservations',
           textAlign: TextAlign.center,
@@ -159,7 +170,9 @@ class _EtatErreur extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(
+          height: 10,
+        ),
         Text(
           message,
           textAlign: TextAlign.center,
@@ -167,7 +180,9 @@ class _EtatErreur extends StatelessWidget {
               .textTheme
               .bodyMedium,
         ),
-        const SizedBox(height: 24),
+        const SizedBox(
+          height: 24,
+        ),
         Center(
           child: FilledButton.icon(
             onPressed: onReessayer,
@@ -192,9 +207,13 @@ class _EtatVide extends StatelessWidget {
     return ListView(
       physics:
           const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(
+        24,
+      ),
       children: [
-        const SizedBox(height: 90),
+        const SizedBox(
+          height: 90,
+        ),
         Icon(
           Icons.inbox_outlined,
           size: 82,
@@ -202,7 +221,9 @@ class _EtatVide extends StatelessWidget {
               .colorScheme
               .primary,
         ),
-        const SizedBox(height: 18),
+        const SizedBox(
+          height: 18,
+        ),
         Text(
           'Aucune demande',
           textAlign: TextAlign.center,
@@ -213,7 +234,9 @@ class _EtatVide extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(
+          height: 10,
+        ),
         Text(
           'Les demandes de réservation reçues '
           'pour vos trajets apparaîtront ici.',
@@ -222,7 +245,9 @@ class _EtatVide extends StatelessWidget {
               .textTheme
               .bodyMedium,
         ),
-        const SizedBox(height: 16),
+        const SizedBox(
+          height: 16,
+        ),
         Text(
           'Tirez la page vers le bas pour actualiser.',
           textAlign: TextAlign.center,
@@ -235,8 +260,7 @@ class _EtatVide extends StatelessWidget {
   }
 }
 
-class DriverReservationCard
-    extends StatefulWidget {
+class DriverReservationCard extends StatefulWidget {
   const DriverReservationCard({
     super.key,
     required this.reservation,
@@ -256,6 +280,18 @@ class _DriverReservationCardState
   Reservation get reservation =>
       widget.reservation;
 
+  Future<void> _ouvrirPointRendezVous() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) {
+          return DriverPointRendezVousScreen(
+            reservation: reservation,
+          );
+        },
+      ),
+    );
+  }
+
   Future<bool> _demanderConfirmation({
     required String titre,
     required String message,
@@ -266,13 +302,18 @@ class _DriverReservationCardState
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: Text(titre),
-          content: Text(message),
+          title: Text(
+            titre,
+          ),
+          content: Text(
+            message,
+          ),
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(dialogContext)
-                    .pop(false);
+                Navigator.of(dialogContext).pop(
+                  false,
+                );
               },
               child: const Text(
                 'Annuler',
@@ -292,8 +333,9 @@ class _DriverReservationCardState
                     )
                   : null,
               onPressed: () {
-                Navigator.of(dialogContext)
-                    .pop(true);
+                Navigator.of(dialogContext).pop(
+                  true,
+                );
               },
               child: Text(
                 texteConfirmation,
@@ -440,7 +482,9 @@ class _DriverReservationCardState
     return Card(
       clipBehavior: Clip.antiAlias,
       child: Padding(
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(
+          18,
+        ),
         child: Column(
           crossAxisAlignment:
               CrossAxisAlignment.start,
@@ -461,7 +505,9 @@ class _DriverReservationCardState
                         .onPrimaryContainer,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(
+                  width: 12,
+                ),
                 Expanded(
                   child: Text(
                     '${reservation.lieuDepart} → '
@@ -477,33 +523,43 @@ class _DriverReservationCardState
                 ),
               ],
             ),
-            const SizedBox(height: 18),
-
+            const SizedBox(
+              height: 18,
+            ),
             _InformationReservation(
               icone:
                   Icons.calendar_today_outlined,
-              texte: reservation.dateDepart,
+              texte:
+                  reservation.dateDepart,
             ),
-            const SizedBox(height: 10),
-
-            _InformationReservation(
-              icone: Icons.access_time_outlined,
-              texte: reservation.heureDepart,
+            const SizedBox(
+              height: 10,
             ),
-            const SizedBox(height: 10),
-
             _InformationReservation(
-              icone: Icons.event_seat_outlined,
+              icone:
+                  Icons.access_time_outlined,
+              texte:
+                  reservation.heureDepart,
+            ),
+            const SizedBox(
+              height: 10,
+            ),
+            _InformationReservation(
+              icone:
+                  Icons.event_seat_outlined,
               texte:
                   '${reservation.nombrePlaces} place(s)',
             ),
 
             if (reservation
                 .informationsPassagerDisponibles) ...[
-              const SizedBox(height: 18),
+              const SizedBox(
+                height: 18,
+              ),
               const Divider(),
-              const SizedBox(height: 10),
-
+              const SizedBox(
+                height: 10,
+              ),
               Text(
                 'Informations du passager',
                 style: Theme.of(context)
@@ -514,14 +570,15 @@ class _DriverReservationCardState
                           FontWeight.bold,
                     ),
               ),
-              const SizedBox(height: 12),
-
+              const SizedBox(
+                height: 12,
+              ),
               _InformationReservation(
-                icone: Icons.person_outline,
+                icone:
+                    Icons.person_outline,
                 texte:
                     reservation.nomPassager!,
               ),
-
               if (reservation
                           .telephonePassager !=
                       null &&
@@ -529,24 +586,51 @@ class _DriverReservationCardState
                       .telephonePassager!
                       .trim()
                       .isNotEmpty) ...[
-                const SizedBox(height: 10),
+                const SizedBox(
+                  height: 10,
+                ),
                 _InformationReservation(
-                  icone: Icons.phone_outlined,
+                  icone:
+                      Icons.phone_outlined,
                   texte: reservation
                       .telephonePassager!,
                 ),
               ],
             ],
 
-            const SizedBox(height: 18),
-
-            DriverStatusBadge(
-              statut: reservation.statut,
+            const SizedBox(
+              height: 18,
             ),
 
-            if (estEnAttente) ...[
-              const SizedBox(height: 20),
+            DriverStatusBadge(
+              statut:
+                  reservation.statut,
+            ),
 
+            if (reservation
+                .pointRendezVousDisponible) ...[
+              const SizedBox(
+                height: 16,
+              ),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed:
+                      _ouvrirPointRendezVous,
+                  icon: const Icon(
+                    Icons.location_on_outlined,
+                  ),
+                  label: const Text(
+                    'Voir le point de rendez-vous',
+                  ),
+                ),
+              ),
+            ],
+
+            if (estEnAttente) ...[
+              const SizedBox(
+                height: 20,
+              ),
               if (_traitement)
                 const Center(
                   child: Padding(
@@ -573,7 +657,9 @@ class _DriverReservationCardState
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(
+                      width: 12,
+                    ),
                     Expanded(
                       child:
                           FilledButton.icon(
@@ -619,7 +705,9 @@ class _InformationReservation
               .colorScheme
               .primary,
         ),
-        const SizedBox(width: 10),
+        const SizedBox(
+          width: 10,
+        ),
         Expanded(
           child: Text(
             texte,
@@ -654,27 +742,38 @@ class DriverStatusBadge
       ),
       decoration: BoxDecoration(
         color: informations.couleur
-            .withValues(alpha: 0.12),
+            .withValues(
+          alpha: 0.12,
+        ),
         borderRadius:
-            BorderRadius.circular(20),
+            BorderRadius.circular(
+          20,
+        ),
         border: Border.all(
-          color: informations.couleur,
+          color:
+              informations.couleur,
         ),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisSize:
+            MainAxisSize.min,
         children: [
           Icon(
             informations.icone,
             size: 16,
-            color: informations.couleur,
+            color:
+                informations.couleur,
           ),
-          const SizedBox(width: 6),
+          const SizedBox(
+            width: 6,
+          ),
           Text(
             informations.libelle,
             style: TextStyle(
-              color: informations.couleur,
-              fontWeight: FontWeight.bold,
+              color:
+                  informations.couleur,
+              fontWeight:
+                  FontWeight.bold,
             ),
           ),
         ],
@@ -690,7 +789,8 @@ class DriverStatusBadge
         return const _InformationsStatut(
           libelle: 'Acceptée',
           couleur: Colors.green,
-          icone: Icons.check_circle_outline,
+          icone:
+              Icons.check_circle_outline,
         );
 
       case 'refusee':
@@ -698,7 +798,8 @@ class DriverStatusBadge
         return const _InformationsStatut(
           libelle: 'Refusée',
           couleur: Colors.red,
-          icone: Icons.cancel_outlined,
+          icone:
+              Icons.cancel_outlined,
         );
 
       case 'annulee':
@@ -706,7 +807,8 @@ class DriverStatusBadge
         return const _InformationsStatut(
           libelle: 'Annulée',
           couleur: Colors.grey,
-          icone: Icons.block_outlined,
+          icone:
+              Icons.block_outlined,
         );
 
       case 'en_attente':
@@ -714,7 +816,8 @@ class DriverStatusBadge
         return const _InformationsStatut(
           libelle: 'En attente',
           couleur: Colors.orange,
-          icone: Icons.schedule_outlined,
+          icone:
+              Icons.schedule_outlined,
         );
     }
   }

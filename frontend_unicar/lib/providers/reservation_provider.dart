@@ -150,6 +150,59 @@ class ReservationProvider extends ChangeNotifier {
       rechargerApresSucces: true,
     );
   }
+  Future<bool> enregistrerPointRendezVous({
+  required int reservationId,
+  required String adresse,
+  required double latitude,
+  required double longitude,
+}) async {
+  if (reservationId <= 0) {
+    _definirErreur(
+      'La réservation sélectionnée est invalide.',
+    );
+
+    return false;
+  }
+
+  if (adresse.trim().isEmpty) {
+    _definirErreur(
+      'Veuillez renseigner une adresse ou un repère.',
+    );
+
+    return false;
+  }
+
+  if (latitude < -90 || latitude > 90) {
+    _definirErreur(
+      'La latitude sélectionnée est invalide.',
+    );
+
+    return false;
+  }
+
+  if (longitude < -180 || longitude > 180) {
+    _definirErreur(
+      'La longitude sélectionnée est invalide.',
+    );
+
+    return false;
+  }
+
+  return _executerAction(
+    action: () {
+      return _reservationService
+          .enregistrerPointRendezVous(
+        reservationId: reservationId,
+        adresse: adresse.trim(),
+        latitude: latitude,
+        longitude: longitude,
+      );
+    },
+    messageErreurParDefaut:
+        'Impossible d’enregistrer le point de rendez-vous.',
+    rechargerApresSucces: true,
+  );
+}
 
   Future<bool> _executerAction({
     required Future<Map<String, dynamic>> Function()

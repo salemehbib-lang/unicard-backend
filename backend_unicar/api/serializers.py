@@ -468,9 +468,6 @@ class ChangerEtatTrajetSerializer(serializers.ModelSerializer):
         return value
 
 
-
-# RESERVATION
-
 # RESERVATION
 
 class ReservationSerializer(serializers.ModelSerializer):
@@ -489,26 +486,34 @@ class ReservationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Reservation
         fields = [
-            "id",
-            "trajet",
-            "trajet_details",
-            "passager",
-            "passager_details",
-            "conducteur_details",
-            "nombre_places",
-            "statut",
-            "date_reservation",
+    "id",
+    "trajet",
+    "trajet_details",
+    "passager",
+    "passager_details",
+    "conducteur_details",
+    "nombre_places",
+    "statut",
+    "adresse_rendez_vous",
+    "latitude_rendez_vous",
+    "longitude_rendez_vous",
+    "point_rendez_vous_confirme",
+    "date_reservation",
         ]
 
-        read_only_fields = [
-            "id",
-            "passager",
-            "passager_details",
-            "conducteur_details",
-            "statut",
-            "date_reservation",
-            "trajet_details",
-        ]
+    read_only_fields = [
+    "id",
+    "passager",
+    "passager_details",
+    "conducteur_details",
+    "statut",
+    "date_reservation",
+    "trajet_details",
+    "adresse_rendez_vous",
+    "latitude_rendez_vous",
+    "longitude_rendez_vous",
+    "point_rendez_vous_confirme",
+]
 
     def get_conducteur_details(self, obj):
         request = self.context.get("request")
@@ -651,6 +656,134 @@ class ReservationSerializer(serializers.ModelSerializer):
                     )
 
         return attrs
+class PointRendezVousSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Reservation
+
+        fields = [
+            "adresse_rendez_vous",
+            "latitude_rendez_vous",
+            "longitude_rendez_vous",
+            "point_rendez_vous_confirme",
+        ]
+
+        read_only_fields = [
+            "point_rendez_vous_confirme",
+        ]
+
+    def validate(self, attrs):
+        request = self.context.get("request")
+        reservation = self.instance
+
+        if reservation is None:
+            raise serializers.ValidationError(
+                "La réservation est introuvable."
+            )
+
+        # Seul le passager propriétaire peut définir
+        # son point de rendez-vous.
+        if (
+            request is None
+            or request.user != reservation.passager
+        ):
+            raise serializers.ValidationError(
+                "Vous ne pouvez pas modifier le point "
+                "de rendez-vous de cette réservation."
+            )
+
+        # Le point devient accessible seulement après
+        # l’acceptation de la réservation.
+        if (
+            reservation.statut
+            != Reservation.Statut.ACCEPTEE
+        ):
+            raise serializers.ValidationError(
+                {
+                    "statut": (
+                        "Le point de rendez-vous peut être "
+                        "défini uniquement après l’acceptation "
+                        "de la réservation."
+                    )
+                }
+            )
+
+        adresse = attrs.get(
+            "adresse_rendez_vous",
+            reservation.adresse_rendez_vous,
+        )
+
+        latitude = attrs.get(
+            "latitude_rendez_vous",
+            reservation.latitude_rendez_vous,
+        )
+
+        longitude = attrs.get(
+            "longitude_rendez_vous",
+            reservation.longitude_rendez_vous,
+        )
+
+        if not adresse or not adresse.strip():
+            raise serializers.ValidationError(
+                {
+                    "adresse_rendez_vous": (
+                        "Veuillez renseigner une adresse "
+                        "ou une description du lieu."
+                    )
+                }
+            )
+
+        if latitude is None:
+            raise serializers.ValidationError(
+                {
+                    "latitude_rendez_vous": (
+                        "La latitude est obligatoire."
+                    )
+                }
+            )
+
+        if longitude is None:
+            raise serializers.ValidationError(
+                {
+                    "longitude_rendez_vous": (
+                        "La longitude est obligatoire."
+                    )
+                }
+            )
+
+        if latitude < -90 or latitude > 90:
+            raise serializers.ValidationError(
+                {
+                    "latitude_rendez_vous": (
+                        "La latitude doit être comprise "
+                        "entre -90 et 90."
+                    )
+                }
+            )
+
+        if longitude < -180 or longitude > 180:
+            raise serializers.ValidationError(
+                {
+                    "longitude_rendez_vous": (
+                        "La longitude doit être comprise "
+                        "entre -180 et 180."
+                    )
+                }
+            )
+
+        attrs["adresse_rendez_vous"] = adresse.strip()
+
+        return attrs
+
+    def update(self, instance, validated_data):
+        validated_data[
+            "point_rendez_vous_confirme"
+        ] = True
+
+        return super().update(
+            instance,
+            validated_data,
+        )
 
 # NOTIFICATION
 

@@ -333,6 +333,113 @@ Future<Map<String, dynamic>> refuserReservation({
     };
   }
 }
+Future<Map<String, dynamic>> enregistrerPointRendezVous({
+  required int reservationId,
+  required String adresse,
+  required double latitude,
+  required double longitude,
+}) async {
+  final token =
+      await TokenStorage.recupererAccessToken();
+
+  if (token == null || token.trim().isEmpty) {
+    return {
+      'succes': false,
+      'message': (
+        'Votre session a expiré. '
+        'Veuillez vous reconnecter.'
+      ),
+    };
+  }
+
+  final url =
+      '${ApiConfig.reservations}'
+      '$reservationId/point-rendez-vous/';
+
+  try {
+    final response = await http.patch(
+      Uri.parse(url),
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ${token.trim()}',
+      },
+      body: jsonEncode({
+        'adresse_rendez_vous': adresse.trim(),
+        'latitude_rendez_vous': latitude,
+        'longitude_rendez_vous': longitude,
+      }),
+    );
+
+    debugPrint(
+      'URL POINT RENDEZ-VOUS : $url',
+    );
+
+    debugPrint(
+      'CODE POINT RENDEZ-VOUS : '
+      '${response.statusCode}',
+    );
+
+    debugPrint(
+      'REPONSE POINT RENDEZ-VOUS : '
+      '${response.body}',
+    );
+
+    dynamic donnees;
+
+    if (response.body.trim().isNotEmpty) {
+      try {
+        donnees = jsonDecode(
+          response.body,
+        );
+      } catch (_) {
+        donnees = null;
+      }
+    }
+
+    if (response.statusCode == 200) {
+      return {
+        'succes': true,
+        'message': (
+          donnees is Map &&
+                  donnees['message'] != null
+              ? donnees['message'].toString()
+              : 'Point de rendez-vous enregistré avec succès.'
+        ),
+        'reservation': donnees,
+      };
+    }
+
+    if (response.statusCode == 401) {
+      return {
+        'succes': false,
+        'message': (
+          'Votre session a expiré. '
+          'Veuillez vous reconnecter.'
+        ),
+      };
+    }
+
+    return {
+      'succes': false,
+      'message': _extraireMessageErreur(
+        donnees,
+        response.statusCode,
+      ),
+    };
+  } catch (erreur) {
+    debugPrint(
+      'ERREUR POINT RENDEZ-VOUS : $erreur',
+    );
+
+    return {
+      'succes': false,
+      'message': (
+        'Impossible de contacter le serveur Django.'
+      ),
+    };
+  }
+}
 
   String _extraireMessageErreur(
     dynamic donnees,
