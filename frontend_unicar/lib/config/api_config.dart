@@ -1,76 +1,74 @@
+import 'package:flutter/foundation.dart';
+
 class ApiConfig {
-  static const String baseUrl =
-      'http://127.0.0.1:8000/api';
+  static String get baseUrl {
+    if (kIsWeb) {
+      return 'http://127.0.0.1:8000/api';
+    }
+
+    return 'http://10.0.2.2:8000/api';
+  }
 
   // AUTHENTIFICATION
 
-  static const String connexion =
+  static String get connexion =>
       '$baseUrl/auth/connexion/';
 
-  static const String inscription =
+  static String get inscription =>
       '$baseUrl/auth/inscription/';
 
-  static const String profil =
+  static String get profil =>
       '$baseUrl/auth/profil/';
 
-  static const String refreshToken =
+  static String get refreshToken =>
       '$baseUrl/auth/token/refresh/';
 
   // TRAJETS
 
-  static const String trajets =
+  static String get trajets =>
       '$baseUrl/trajets/';
 
-  static const String mesTrajets =
+  static String get mesTrajets =>
       '$baseUrl/mes-trajets/';
 
   // RÉSERVATIONS
 
-  static const String reservations =
+  static String get reservations =>
       '$baseUrl/reservations/';
 
   // VÉHICULES
 
-  static const String vehicules =
+  static String get vehicules =>
       '$baseUrl/vehicules/';
 
   // NOTIFICATIONS
 
-  static const String notifications =
+  static String get notifications =>
       '$baseUrl/notifications/';
 
   // ADMINISTRATION
 
-  static const String adminUtilisateurs =
+  static String get adminUtilisateurs =>
       '$baseUrl/admin/utilisateurs/';
 
-  static const String adminStatistiques =
+  static String get adminStatistiques =>
       '$baseUrl/admin/statistiques/';
 
   static String adminDetailUtilisateur(
     int utilisateurId,
   ) {
-    return (
-      '$adminUtilisateurs'
-      '$utilisateurId/'
-    );
+    return '$adminUtilisateurs$utilisateurId/';
   }
 
   static String adminBloquerUtilisateur(
     int utilisateurId,
   ) {
-    return (
-      '$adminUtilisateurs'
-      '$utilisateurId/bloquer/'
-    );
+    return '$adminUtilisateurs$utilisateurId/bloquer/';
   }
 
   static String adminDebloquerUtilisateur(
     int utilisateurId,
   ) {
-    return (
-      '$adminUtilisateurs'
-      '$utilisateurId/debloquer/'
-    );
+    return '$adminUtilisateurs$utilisateurId/debloquer/';
   }
 }

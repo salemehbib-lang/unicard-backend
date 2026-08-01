@@ -328,7 +328,6 @@ class _TrajetCard extends StatelessWidget {
 
   static const Color _bleuPrincipal = Color(0xFF123A63);
   static const Color _bleuClair = Color(0xFFEAF3FC);
-  static const Color _orange = Color(0xFFF59E0B);
 
   @override
   Widget build(BuildContext context) {

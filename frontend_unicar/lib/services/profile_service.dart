@@ -2,20 +2,15 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import '../config/api_config.dart';
 import '../utils/token_storage.dart';
 
 class ProfileService {
-  final String baseUrl;
-
-  ProfileService({
-    this.baseUrl = 'http://127.0.0.1:8000/api',
-  });
-
   Future<Map<String, dynamic>> recupererProfil() async {
     final token =
         await TokenStorage.recupererAccessToken();
 
-    if (token == null) {
+    if (token == null || token.isEmpty) {
       return {
         'succes': false,
         'message':
@@ -25,7 +20,7 @@ class ProfileService {
 
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/auth/profil/'),
+        Uri.parse(ApiConfig.profil),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -45,7 +40,7 @@ class ProfileService {
         'succes': false,
         'message': _extraireMessageErreur(data),
       };
-    } catch (_) {
+    } catch (erreur) {
       return {
         'succes': false,
         'message':
@@ -63,7 +58,7 @@ class ProfileService {
     final token =
         await TokenStorage.recupererAccessToken();
 
-    if (token == null) {
+    if (token == null || token.isEmpty) {
       return {
         'succes': false,
         'message':
@@ -73,7 +68,7 @@ class ProfileService {
 
     try {
       final response = await http.patch(
-        Uri.parse('$baseUrl/auth/profil/'),
+        Uri.parse(ApiConfig.profil),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -92,8 +87,7 @@ class ProfileService {
         return {
           'succes': true,
           'profil': data,
-          'message':
-              'Profil modifié avec succès.',
+          'message': 'Profil modifié avec succès.',
         };
       }
 
@@ -101,7 +95,7 @@ class ProfileService {
         'succes': false,
         'message': _extraireMessageErreur(data),
       };
-    } catch (_) {
+    } catch (erreur) {
       return {
         'succes': false,
         'message':
@@ -110,8 +104,7 @@ class ProfileService {
     }
   }
 
-  Future<Map<String, dynamic>>
-      changerMotDePasse({
+  Future<Map<String, dynamic>> changerMotDePasse({
     required String ancienMotDePasse,
     required String nouveauMotDePasse,
     required String confirmationMotDePasse,
@@ -119,7 +112,7 @@ class ProfileService {
     final token =
         await TokenStorage.recupererAccessToken();
 
-    if (token == null) {
+    if (token == null || token.isEmpty) {
       return {
         'succes': false,
         'message':
@@ -128,9 +121,9 @@ class ProfileService {
     }
 
     try {
-      final response = await http.patch(
+      final response = await http.post(
         Uri.parse(
-          '$baseUrl/auth/changer-mot-de-passe/',
+          '${ApiConfig.baseUrl}/auth/changer-mot-de-passe/',
         ),
         headers: {
           'Authorization': 'Bearer $token',
@@ -163,7 +156,7 @@ class ProfileService {
         'succes': false,
         'message': _extraireMessageErreur(data),
       };
-    } catch (_) {
+    } catch (erreur) {
       return {
         'succes': false,
         'message':
@@ -179,7 +172,7 @@ class ProfileService {
 
     try {
       return jsonDecode(body);
-    } catch (_) {
+    } catch (erreur) {
       return {
         'detail':
             'La réponse du serveur est invalide.',

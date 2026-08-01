@@ -14,7 +14,8 @@ class TokenStorage {
     required String accessToken,
     required String refreshToken,
   }) async {
-    final preferences = await SharedPreferences.getInstance();
+    final preferences =
+        await SharedPreferences.getInstance();
 
     await preferences.setString(
       _cleAccessToken,
@@ -27,6 +28,18 @@ class TokenStorage {
     );
   }
 
+  static Future<void> enregistrerAccessToken(
+    String accessToken,
+  ) async {
+    final preferences =
+        await SharedPreferences.getInstance();
+
+    await preferences.setString(
+      _cleAccessToken,
+      accessToken,
+    );
+  }
+
   static Future<void> enregistrerUtilisateur({
     required int id,
     required String username,
@@ -34,7 +47,8 @@ class TokenStorage {
     required String telephone,
     required String role,
   }) async {
-    final preferences = await SharedPreferences.getInstance();
+    final preferences =
+        await SharedPreferences.getInstance();
 
     await preferences.setInt(
       _cleUtilisateurId,
@@ -63,59 +77,87 @@ class TokenStorage {
   }
 
   static Future<String?> recupererAccessToken() async {
-    final preferences = await SharedPreferences.getInstance();
+    final preferences =
+        await SharedPreferences.getInstance();
 
-    return preferences.getString(_cleAccessToken);
+    return preferences.getString(
+      _cleAccessToken,
+    );
   }
 
   static Future<String?> recupererRefreshToken() async {
-    final preferences = await SharedPreferences.getInstance();
+    final preferences =
+        await SharedPreferences.getInstance();
 
-    return preferences.getString(_cleRefreshToken);
+    return preferences.getString(
+      _cleRefreshToken,
+    );
   }
 
   static Future<int?> recupererUtilisateurId() async {
-    final preferences = await SharedPreferences.getInstance();
+    final preferences =
+        await SharedPreferences.getInstance();
 
-    return preferences.getInt(_cleUtilisateurId);
+    return preferences.getInt(
+      _cleUtilisateurId,
+    );
   }
 
   static Future<String?> recupererUsername() async {
-    final preferences = await SharedPreferences.getInstance();
+    final preferences =
+        await SharedPreferences.getInstance();
 
-    return preferences.getString(_cleUsername);
+    return preferences.getString(
+      _cleUsername,
+    );
   }
 
   static Future<String?> recupererEmail() async {
-    final preferences = await SharedPreferences.getInstance();
+    final preferences =
+        await SharedPreferences.getInstance();
 
-    return preferences.getString(_cleEmail);
+    return preferences.getString(
+      _cleEmail,
+    );
   }
 
   static Future<String?> recupererTelephone() async {
-    final preferences = await SharedPreferences.getInstance();
+    final preferences =
+        await SharedPreferences.getInstance();
 
-    return preferences.getString(_cleTelephone);
+    return preferences.getString(
+      _cleTelephone,
+    );
   }
 
   static Future<String?> recupererRole() async {
-    final preferences = await SharedPreferences.getInstance();
+    final preferences =
+        await SharedPreferences.getInstance();
 
-    return preferences.getString(_cleRole);
+    return preferences.getString(
+      _cleRole,
+    );
   }
 
   static Future<bool> estConnecte() async {
-    final token = await recupererAccessToken();
+    final accessToken =
+        await recupererAccessToken();
 
-    return token != null && token.isNotEmpty;
+    final refreshToken =
+        await recupererRefreshToken();
+
+    return accessToken != null &&
+        accessToken.isNotEmpty &&
+        refreshToken != null &&
+        refreshToken.isNotEmpty;
   }
 
   static Future<void> supprimerSession() async {
-    final preferences = await SharedPreferences.getInstance();
+    final preferences =
+        await SharedPreferences.getInstance();
 
     await preferences.remove(_cleAccessToken);
     await preferences.remove(_cleRefreshToken);
-
     await preferences.remove(_cleUtilisateurId);
     await preferences.remove(_cleUsername);
     await preferences.remove(_cleEmail);

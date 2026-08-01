@@ -5,15 +5,16 @@ import '../utils/token_storage.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
+
   String? _role;
   String? _username;
-
-  String? get role => _role;
-  String? get username => _username;
 
   bool _chargement = false;
   bool _estConnecte = false;
   String? _messageErreur;
+
+  String? get role => _role;
+  String? get username => _username;
 
   bool get chargement => _chargement;
   bool get estConnecte => _estConnecte;
@@ -21,6 +22,15 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> verifierConnexion() async {
     _estConnecte = await TokenStorage.estConnecte();
+
+    if (_estConnecte) {
+      _role = await TokenStorage.recupererRole();
+      _username = await TokenStorage.recupererUsername();
+    } else {
+      _role = null;
+      _username = null;
+    }
+
     notifyListeners();
   }
 
@@ -47,29 +57,35 @@ class AuthProvider extends ChangeNotifier {
     _chargement = false;
 
     if (resultat['succes'] == true) {
+      _estConnecte = true;
       _role = resultat['role']?.toString();
 
       final utilisateur = resultat['utilisateur'];
 
       if (utilisateur is Map<String, dynamic>) {
         _username = utilisateur['username']?.toString();
+      } else {
+        _username = username;
       }
 
-      _chargement = false;
       notifyListeners();
-
       return true;
     }
 
     _estConnecte = false;
+    _role = null;
+    _username = null;
     _messageErreur =
-        resultat['message']?.toString() ?? 'Une erreur est survenue.';
+        resultat['message']?.toString() ??
+        'Une erreur est survenue.';
+
     notifyListeners();
     return false;
   }
 
   Future<void> deconnexion() async {
     await TokenStorage.supprimerSession();
+
     _estConnecte = false;
     _role = null;
     _username = null;

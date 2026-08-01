@@ -207,7 +207,58 @@ class AuthService {
       };
     }
   }
+Future<bool> renouvelerAccessToken() async {
+  final refreshToken =
+      await TokenStorage.recupererRefreshToken();
 
+  if (refreshToken == null || refreshToken.isEmpty) {
+    await TokenStorage.supprimerSession();
+    return false;
+  }
+
+  try {
+    final response = await http.post(
+      Uri.parse(ApiConfig.refreshToken),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'refresh': refreshToken,
+      }),
+    );
+
+    final donnees = _decoderReponse(response.body);
+
+    if (response.statusCode == 200) {
+      final nouveauAccessToken =
+          donnees['access']?.toString() ?? '';
+
+      if (nouveauAccessToken.isEmpty) {
+        await TokenStorage.supprimerSession();
+        return false;
+      }
+
+      await TokenStorage.enregistrerAccessToken(
+        nouveauAccessToken,
+      );
+
+      debugPrint(
+        'Jeton d’accès renouvelé avec succès.',
+      );
+
+      return true;
+    }
+
+    await TokenStorage.supprimerSession();
+    return false;
+  } catch (erreur) {
+    debugPrint(
+      'Erreur pendant le renouvellement du token : $erreur',
+    );
+
+    return false;
+  }
+}
   Future<void> deconnexion() async {
     await TokenStorage.supprimerSession();
   }
