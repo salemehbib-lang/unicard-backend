@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../../providers/auth_provider.dart';
 import 'add_vehicle_screen.dart';
 import 'add_trip_screen.dart';
 import 'driver_reservations_screen.dart';
@@ -7,6 +9,23 @@ import 'my_trips_screen.dart';
 
 class DriverMainScreen extends StatelessWidget {
   const DriverMainScreen({super.key});
+
+  Future<void> _seDeconnecter(
+    BuildContext context,
+  ) async {
+    await context
+        .read<AuthProvider>()
+        .deconnexion();
+
+    if (!context.mounted) {
+      return;
+    }
+
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      '/connexion',
+      (route) => false,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,11 +35,19 @@ class DriverMainScreen extends StatelessWidget {
           'Espace conducteur',
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            onPressed: () => _seDeconnecter(context),
+            tooltip: 'Se déconnecter',
+            icon: const Icon(Icons.logout),
+          ),
+        ],
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          crossAxisAlignment:
+              CrossAxisAlignment.stretch,
           children: [
             Text(
               'Que souhaitez-vous faire ?',
@@ -50,7 +77,8 @@ class DriverMainScreen extends StatelessWidget {
                 'Ajouter un véhicule',
               ),
               style: FilledButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
+                padding:
+                    const EdgeInsets.symmetric(
                   vertical: 18,
                 ),
               ),
@@ -67,14 +95,13 @@ class DriverMainScreen extends StatelessWidget {
                   ),
                 );
               },
-              icon: const Icon(
-                Icons.add_road,
-              ),
+              icon: const Icon(Icons.add_road),
               label: const Text(
                 'Publier un trajet',
               ),
               style: FilledButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
+                padding:
+                    const EdgeInsets.symmetric(
                   vertical: 18,
                 ),
               ),
@@ -98,7 +125,8 @@ class DriverMainScreen extends StatelessWidget {
                 'Mes trajets',
               ),
               style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
+                padding:
+                    const EdgeInsets.symmetric(
                   vertical: 18,
                 ),
               ),
@@ -122,9 +150,21 @@ class DriverMainScreen extends StatelessWidget {
                 'Demandes de réservation',
               ),
               style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
+                padding:
+                    const EdgeInsets.symmetric(
                   vertical: 18,
                 ),
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            TextButton.icon(
+              onPressed: () =>
+                  _seDeconnecter(context),
+              icon: const Icon(Icons.logout),
+              label: const Text(
+                'Se déconnecter',
               ),
             ),
           ],

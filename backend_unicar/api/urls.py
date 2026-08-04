@@ -114,11 +114,6 @@ urlpatterns = [
     AnnulerTrajetView.as_view(),
     name="annuler_trajet",
     ),
-    path(
-    "reservations/<int:reservation_id>/point-rendez-vous/",
-    PointRendezVousReservationView.as_view(),
-    name="reservation-point-rendez-vous",
-    ),
     
     # Réservations
     

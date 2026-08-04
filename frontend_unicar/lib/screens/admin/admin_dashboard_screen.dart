@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../models/admin_utilisateur.dart';
 import '../../providers/admin_provider.dart';
+import 'add_user_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -433,6 +434,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
+  Future<void> _ouvrirAjoutUtilisateur() async {
+    final utilisateurAjoute =
+        await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => const AddUserScreen(),
+      ),
+    );
+
+    if (utilisateurAjoute == true && mounted) {
+      await _chargerDonnees();
+    }
+  }
+
   Widget _construireFiltres() {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -441,36 +455,58 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           _FiltreBouton(
             titre: 'Tous',
             valeur: 'tous',
-            selectionne:
-                _filtreRole == 'tous',
+            selectionne: _filtreRole == 'tous',
             onSelection: _changerFiltre,
+          ),
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: FilledButton.icon(
+              onPressed: _ouvrirAjoutUtilisateur,
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF1565C0),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 11,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+              icon: const Icon(
+                Icons.person_add_alt_1,
+                size: 19,
+              ),
+              label: const Text(
+                'Ajouter un utilisateur',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
           ),
           _FiltreBouton(
             titre: 'Passagers',
             valeur: 'passager',
-            selectionne:
-                _filtreRole == 'passager',
+            selectionne: _filtreRole == 'passager',
             onSelection: _changerFiltre,
           ),
           _FiltreBouton(
             titre: 'Conducteurs',
             valeur: 'conducteur',
-            selectionne:
-                _filtreRole == 'conducteur',
+            selectionne: _filtreRole == 'conducteur',
             onSelection: _changerFiltre,
           ),
           _FiltreBouton(
             titre: 'Administrateurs',
             valeur: 'administrateur',
-            selectionne:
-                _filtreRole == 'administrateur',
+            selectionne: _filtreRole == 'administrateur',
             onSelection: _changerFiltre,
           ),
           _FiltreBouton(
             titre: 'Bloqués',
             valeur: 'bloques',
-            selectionne:
-                _filtreRole == 'bloques',
+            selectionne: _filtreRole == 'bloques',
             onSelection: _changerFiltre,
           ),
         ],

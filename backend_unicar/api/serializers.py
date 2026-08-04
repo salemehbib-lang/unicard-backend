@@ -886,3 +886,58 @@ class ConnexionTokenSerializer(TokenObtainPairSerializer):
         }
 
         return donnees
+class AdminCreerUtilisateurSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(
+        write_only=True,
+        required=True,
+        validators=[validate_password],
+        style={"input_type": "password"},
+    )
+
+    password_confirmation = serializers.CharField(
+        write_only=True,
+        required=True,
+        style={"input_type": "password"},
+    )
+
+    class Meta:
+        model = Utilisateur
+        fields = [
+            "id",
+            "username",
+            "first_name",
+            "last_name",
+            "email",
+            "telephone",
+            "role",
+            "password",
+            "password_confirmation",
+        ]
+
+        read_only_fields = [
+            "id",
+        ]
+
+    def validate(self, attrs):
+        if attrs["password"] != attrs["password_confirmation"]:
+            raise serializers.ValidationError(
+                {
+                    "password_confirmation":
+                        "Les mots de passe ne correspondent pas."
+                }
+            )
+
+        return attrs
+
+    def create(self, validated_data):
+        validated_data.pop("password_confirmation")
+        password = validated_data.pop("password")
+
+        utilisateur = Utilisateur(
+            **validated_data
+        )
+
+        utilisateur.set_password(password)
+        utilisateur.save()
+
+        return utilisateur

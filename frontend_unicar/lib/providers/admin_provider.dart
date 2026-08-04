@@ -13,6 +13,7 @@ class AdminProvider extends ChangeNotifier {
 
   bool _chargementStatistiques = false;
   bool _chargementUtilisateurs = false;
+  bool _ajoutUtilisateurEnCours = false;
 
   String? _messageErreur;
   String? _messageSucces;
@@ -29,6 +30,9 @@ class AdminProvider extends ChangeNotifier {
 
   bool get chargementUtilisateurs =>
       _chargementUtilisateurs;
+
+  bool get ajoutUtilisateurEnCours =>
+      _ajoutUtilisateurEnCours;
 
   String? get messageErreur =>
       _messageErreur;
@@ -119,6 +123,63 @@ class AdminProvider extends ChangeNotifier {
     _messageErreur = (
       resultat['message'] ??
       'Impossible de charger les utilisateurs.'
+    ).toString();
+
+    notifyListeners();
+    return false;
+  }
+
+  Future<bool> ajouterUtilisateur({
+    required String username,
+    required String firstName,
+    required String lastName,
+    required String email,
+    required String telephone,
+    required String role,
+    required String password,
+    required String passwordConfirmation,
+  }) async {
+    if (_ajoutUtilisateurEnCours) {
+      return false;
+    }
+
+    _ajoutUtilisateurEnCours = true;
+    _messageErreur = null;
+    _messageSucces = null;
+
+    notifyListeners();
+
+    final resultat =
+        await _adminService.ajouterUtilisateur(
+      username: username,
+      firstName: firstName,
+      lastName: lastName,
+      email: email,
+      telephone: telephone,
+      role: role,
+      password: password,
+      passwordConfirmation:
+          passwordConfirmation,
+    );
+
+    _ajoutUtilisateurEnCours = false;
+
+    if (resultat['succes'] == true) {
+      _messageSucces = (
+        resultat['message'] ??
+        'Utilisateur ajouté avec succès.'
+      ).toString();
+
+      await chargerUtilisateurs();
+      await chargerStatistiques();
+
+      notifyListeners();
+      return true;
+    }
+
+    _messageErreur = (
+      resultat['message'] ??
+      'Impossible d’ajouter l’utilisateur.'
     ).toString();
 
     notifyListeners();

@@ -29,6 +29,7 @@ from .serializers import (
     ChangerEtatTrajetSerializer,
     NotificationSerializer,
     AdminUtilisateurSerializer,
+    AdminCreerUtilisateurSerializer,
     ChangerMotDePasseSerializer,
     
 )
@@ -1105,13 +1106,18 @@ class MarquerNotificationLueView(generics.UpdateAPIView):
 # ADMINISTRATION DES UTILISATEURS
 
 class ListeUtilisateursAdminView(
-    generics.ListAPIView
+    generics.ListCreateAPIView
 ):
-    serializer_class = AdminUtilisateurSerializer
     permission_classes = [
         permissions.IsAuthenticated,
         EstAdministrateur,
     ]
+
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return AdminCreerUtilisateurSerializer
+
+        return AdminUtilisateurSerializer
 
     def get_queryset(self):
         queryset = Utilisateur.objects.all().order_by(
@@ -1124,7 +1130,9 @@ class ListeUtilisateursAdminView(
         )
 
         if role:
-            queryset = queryset.filter(role=role)
+            queryset = queryset.filter(
+                role=role
+            )
 
         if est_bloque is not None:
             if est_bloque.lower() == "true":
@@ -1138,6 +1146,32 @@ class ListeUtilisateursAdminView(
                 )
 
         return queryset
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(
+            data=request.data
+        )
+
+        serializer.is_valid(
+            raise_exception=True
+        )
+
+        utilisateur = serializer.save()
+
+        return Response(
+            {
+                "message": (
+                    "L’utilisateur a été créé "
+                    "avec succès."
+                ),
+                "utilisateur": (
+                    AdminUtilisateurSerializer(
+                        utilisateur
+                    ).data
+                ),
+            },
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class DetailUtilisateurAdminView(
